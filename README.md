@@ -69,7 +69,7 @@ The modes are a single BIOS setting exposed through HP's WMI interface (`root\wm
 
 ## My HP
 
-You don't need to uninstall My HP, but there's one interaction to know about. Its background process, `HP.SystemControl.Background.exe`, re-applies My HP's last pick about half a second after the charger is plugged in or unplugged. HP Quick Modes watches for that and switches back to your mode, so you may see My HP's pick for about a second.
+You don't need to uninstall My HP, but there's one interaction to know about. Its background process, `HP.SystemControl.Background.exe`, re-applies My HP's last pick when the charger is plugged in or unplugged, several times over the first 5 seconds or so. HP Quick Modes waits for it to finish and then switches back to your mode, so you'll see My HP's pick for about 7 seconds.
 
 To remove My HP:
 
@@ -78,7 +78,7 @@ To remove My HP:
 
 If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again.
 
-To see this in action, run `tools/hp-quick-modes-test.ps1` (read-only) while HP Quick Modes is running, then plug in and unplug a few times. It times how long My HP's switch lasts before HP Quick Modes switches back.
+To see this in action, run `tools/hp-quick-modes-test.ps1` (read-only) while HP Quick Modes is running, then plug in and unplug a few times. It shows each switch and times how long My HP's pick lasts before HP Quick Modes switches back.
 
 ## Safety
 

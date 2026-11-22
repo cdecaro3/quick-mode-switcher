@@ -128,7 +128,7 @@ function Update-State {
     }
 }
 
-function Set-Mode([int]$mode) {
+function Set-Mode([int]$mode, [switch]$NoWarning) {
     if ($script:current -lt 0) { return }   # never write when the last read looked wrong
     $rc = Write-Mode $mode
     Start-Sleep -Milliseconds 500
@@ -137,20 +137,20 @@ function Set-Mode([int]$mode) {
     if ($rc -eq 0 -and $script:current -eq $mode) {
         $script:settings.lastMode = $mode
         Save-Settings
-    } else {
+    } elseif (-not $NoWarning) {
         $now = if ($script:current -ge 0) { $modeNames[$script:current] } else { 'unknown' }
         Show-Warning "Couldn't switch to $($modeNames[$mode]) (code $rc). Current mode: $now."
     }
 }
 
-# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick about
-# half a second after the charger is plugged in or unplugged. Switch back to the mode picked here.
-# Without My HP installed, the mode doesn't change on its own, so this never has to act.
-function Restore-ChosenMode {
+# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick when the
+# charger is plugged in or unplugged, several times over the first ~5 seconds. Switch back to the mode
+# picked here once it's done. Without My HP installed, the mode doesn't change, so this never acts.
+function Restore-ChosenMode([bool]$warnIfStuck) {
     Update-State
     $want = $script:settings.lastMode
     if ($want -ge 0 -and $script:current -ge 0 -and $script:current -ne $want) {
-        Set-Mode $want
+        Set-Mode $want -NoWarning:(-not $warnIfStuck)
     }
 }
 
@@ -184,28 +184,26 @@ $script:tray.add_MouseUp({
 })
 
 # Watch for the charger being plugged in or unplugged (a cheap check, no BIOS call).
-# For 15 seconds after a change, check the mode every half second and switch back if My HP changed it.
+# Switching back right away just starts a back-and-forth with My HP, so wait until it's done (its last
+# re-apply came about 5 seconds in), switch back once, and check again later in case it was slow.
 $script:lastPower    = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
-$script:watchUntil   = $null
 $script:lastChangeAt = $null
+$script:checkIdx     = 0
+$checkAfter = @(7, 12, 20)   # seconds after a power change
 
 $script:powerTimer = New-Object System.Windows.Forms.Timer
-$script:powerTimer.Interval = 2000
+$script:powerTimer.Interval = 500
 $script:powerTimer.add_Tick({
     $p = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
     if ($p -ne $script:lastPower) {
         $script:lastPower    = $p
         $script:lastChangeAt = Get-Date
-        $script:watchUntil   = $script:lastChangeAt.AddSeconds(15)
-        $script:powerTimer.Interval = 500
+        $script:checkIdx     = 0
     }
-    if ($script:watchUntil) {
-        if ((Get-Date) -le $script:watchUntil) {
-            Restore-ChosenMode
-        } else {
-            $script:watchUntil = $null
-            $script:powerTimer.Interval = 2000
-        }
+    if ($script:lastChangeAt -and $script:checkIdx -lt $checkAfter.Count -and
+        ((Get-Date) - $script:lastChangeAt).TotalSeconds -ge $checkAfter[$script:checkIdx]) {
+        $script:checkIdx++
+        Restore-ChosenMode ($script:checkIdx -eq $checkAfter.Count)   # warn only if the last check fails
     }
 })
 
