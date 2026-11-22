@@ -12,11 +12,11 @@ Each mode is a setting in the laptop's BIOS that controls fan speed and CPU perf
 
 | Icon | Mode | What it does |
 |---|---|---|
-| **P** (orange) | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
-| **B** (blue) | Balanced | Balances fan speed, performance and temperature. |
-| **C** (teal) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
-| **Q** (green) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
-| **S** (gray) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
+| **P** (red) | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
+| **B** (gray) | Balanced | Balances fan speed, performance and temperature. |
+| **C** (blue) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
+| **Q** (violet) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
+| **S** (green) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
 
 ## Using it
 
@@ -36,7 +36,7 @@ What to expect:
 | Restart and sign in | The laptop starts up in its startup mode, which is My HP's setting if My HP is installed. A few seconds after you sign in, the app switches to your mode. If "Re-apply my mode at sign-in" is off, the startup mode becomes your mode instead. |
 | Pick a mode in My HP | It works, but only until the next plug-in, unplug, wake or restart. Then the app switches back to your mode. |
 
-If a switch doesn't take, the app shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into a red **!**.
+If a switch doesn't take, the app shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into an amber **!**.
 
 ## Requirements
 
@@ -102,7 +102,7 @@ If My HP comes back anyway, this app keeps working; you'll just see the brief sw
 
 - **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `QuickModeSwitcher.ps1` directly from an Administrator PowerShell to see any error, or look at the "Quick Mode Switcher" task in Task Scheduler.
 - **Nothing happens when I run `QuickModeSwitcher.ps1`.** It's already running, probably the installed copy; look for its icon.
-- **The icon is a red `!`.** The laptop's reply wasn't what the app expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
+- **The icon is an amber `!`.** The laptop's reply wasn't what the app expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
 - **The mode changes on its own.** That's My HP (see [If you keep My HP](#if-you-keep-my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
 - **An old icon stays in the tray after updating or uninstalling.** Windows removes it as soon as you move the mouse over it.
 - **Settings** are in `settings.json` next to the app, which is `C:\Program Files\QuickModeSwitcher` when installed.

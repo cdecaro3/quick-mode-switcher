@@ -41,7 +41,8 @@ if (-not $created) {
 # Index = BIOS value
 $modeNames = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
 $letters   = @('P', 'B', 'C', 'Q', 'S')
-$colors    = @('#D9480F', '#1971C2', '#0C8599', '#2B8A3E', '#495057')   # dark enough for a white letter
+# Red = power, gray = neutral, blue = cold, violet = calm, green = eco. All dark enough for a white letter.
+$colors    = @('#C92A2A', '#495057', '#1971C2', '#6741D9', '#2B8A3E')
 
 # ---------- Settings (last mode, re-apply at login) ----------
 $settingsPath = Join-Path $PSScriptRoot 'settings.json'
@@ -104,7 +105,7 @@ function Write-Mode([int]$mode) {
 # text box, which includes empty space), and sized to the height of a capital H so all letters match.
 $script:iconSize = [Math]::Max(16, [System.Windows.Forms.SystemInformation]::SmallIconSize.Width)
 
-function New-ModeIcon([string]$letter, [string]$hex) {
+function New-ModeIcon([string]$letter, [string]$hex, [string]$letterColor = 'White') {
     $size = $script:iconSize
     $bmp = New-Object System.Drawing.Bitmap $size, $size
     $g = [System.Drawing.Graphics]::FromImage($bmp)
@@ -138,7 +139,9 @@ function New-ModeIcon([string]$letter, [string]$hex) {
     $m.Scale([float]$scale, [float]$scale)                                             # 2. scale to size
     $m.Translate([float](-($lb.X + $lb.Width / 2)), [float](-($rb.Y + $rb.Height / 2)))  # 1. center the letter at 0,0
     $path.Transform($m)
-    $g.FillPath([System.Drawing.Brushes]::White, $path)
+    $letterBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromName($letterColor))
+    $g.FillPath($letterBrush, $path)
+    $letterBrush.Dispose()
 
     $g.Dispose(); $brush.Dispose(); $pen.Dispose(); $path.Dispose(); $ref.Dispose(); $m.Dispose(); $family.Dispose()
     $h = $bmp.GetHicon()
@@ -149,7 +152,7 @@ function New-ModeIcon([string]$letter, [string]$hex) {
 }
 
 $script:icons    = @(for ($i = 0; $i -lt 5; $i++) { New-ModeIcon $letters[$i] $colors[$i] })
-$script:warnIcon = New-ModeIcon '!' '#C92A2A'
+$script:warnIcon = New-ModeIcon '!' '#F59F00' 'Black'   # amber warning, so it can't be mistaken for Performance's red
 
 # ---------- Tray and menu ----------
 $script:tray  = New-Object System.Windows.Forms.NotifyIcon
