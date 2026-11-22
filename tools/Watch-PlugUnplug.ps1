@@ -10,8 +10,15 @@
 Add-Type -AssemblyName System.Windows.Forms
 $names = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
 
-$inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM | Select-Object -First 1
-$inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn
+$id = [Security.Principal.WindowsIdentity]::GetCurrent()
+if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host 'Run this from an Administrator PowerShell.' -ForegroundColor Red
+    exit 1
+}
+
+$inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction SilentlyContinue | Select-Object -First 1
+$inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn -ErrorAction SilentlyContinue
+if (-not $inst -or -not $inCls) { Write-Host 'HP BIOS interface not found; this laptop is not compatible.' -ForegroundColor Red; exit 1 }
 
 function Read-Mode {
     try {
@@ -81,11 +88,11 @@ Log '--- Summary ---'
 if ($events.Count -eq 0) { Log 'No plug/unplugs seen.' }
 foreach ($e in $events) {
     if ($null -eq $e.switchedAfter) {
-        Log "$($e.label): mode didn't change (My HP is gone, or its pick matches yours)."
+        Log "$($e.label): the mode didn't change (My HP isn't installed, or its setting matches your mode)."
     } elseif ($null -eq $e.restoredAfter) {
-        Log ("{0}: My HP switched to {1} after {2:N1} s, and it was NOT switched back." -f $e.label, (Show-Mode $e.to), $e.switchedAfter)
+        Log ("{0}: switched to {1} after {2:N1} s, and it was NOT switched back." -f $e.label, (Show-Mode $e.to), $e.switchedAfter)
     } else {
-        Log ("{0}: My HP switched to {1} after {2:N1} s; switched back {3:N1} s after that." -f $e.label, (Show-Mode $e.to), $e.switchedAfter, ($e.restoredAfter - $e.switchedAfter))
+        Log ("{0}: switched to {1} after {2:N1} s; HP Quick Modes switched it back {3:N1} s later." -f $e.label, (Show-Mode $e.to), $e.switchedAfter, ($e.restoredAfter - $e.switchedAfter))
     }
 }
 $end = Read-Mode

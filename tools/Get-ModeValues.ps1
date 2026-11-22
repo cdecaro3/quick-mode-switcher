@@ -8,6 +8,12 @@
 
 $expected = @{ 'performance' = 0; 'balanced' = 1; 'cool' = 2; 'quiet' = 3; 'power saver' = 4 }
 
+$id = [Security.Principal.WindowsIdentity]::GetCurrent()
+if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host 'Run this from an Administrator PowerShell.' -ForegroundColor Red
+    exit 1
+}
+
 $inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction SilentlyContinue | Select-Object -First 1
 $inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn -ErrorAction SilentlyContinue
 if (-not $inst -or -not $inCls) { Write-Host 'HP BIOS interface not found; this laptop is not compatible.' -ForegroundColor Red; exit 1 }

@@ -40,12 +40,38 @@ if (-not (Test-Path $src)) {
     exit 1
 }
 
+# Does this laptop answer the mode command the way HP Quick Modes expects? (read-only)
+function Test-Bios {
+    try {
+        $inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction Stop | Select-Object -First 1
+        $inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn -ErrorAction Stop
+        $din = New-CimInstance -CimClass $inCls -ClientOnly -Property @{
+            Sign = [byte[]](0x53, 0x45, 0x43, 0x55); Command = [uint32]1; CommandType = [uint32]0x4C
+            Size = [uint32]4; hpqBData = [byte[]](0, 0, 0, 0)
+        }
+        $o = (Invoke-CimMethod -InputObject $inst -MethodName hpqBIOSInt128 -Arguments @{ InData = $din } -ErrorAction Stop).OutData
+        $sign = [System.Text.Encoding]::ASCII.GetString([byte[]]@($o.Sign))
+        return ($o.rwReturnCode -eq 0 -and $sign -eq 'PASS' -and @($o.Data)[0] -le 4)
+    } catch {
+        return $false
+    }
+}
+if (-not (Test-Bios)) {
+    Write-Host "This laptop doesn't seem to support HP Quick Modes. tools\Test-Compatibility.ps1 shows details." -ForegroundColor Yellow
+    if ((Read-Host 'Install anyway? (y/n)') -ne 'y') { exit 1 }
+}
+
 Stop-Tray
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
 Copy-Item -Path $src -Destination $target -Force
 Unblock-File -Path $target
 
-$user = $id.Name
+# The task starts the app for whoever is signed in, which may not be the account running this installer
+$user = (Get-CimInstance Win32_ComputerSystem).UserName
+if (-not $user) { $user = $id.Name }
+if ($user -ne $id.Name) {
+    Write-Host "Note: you're running this as $($id.Name), but $user is signed in. HP Quick Modes will start when $user signs in, and that account needs to be an administrator for it to work." -ForegroundColor Yellow
+}
 # conhost --headless runs PowerShell with no console window at all
 $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\conhost.exe" `
     -Argument "--headless powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$target`""
@@ -59,5 +85,17 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Pr
     -Settings $settings -Description 'Tray menu for switching HP laptop modes' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 
-Write-Host "Installed to $dir and set to start at login." -ForegroundColor Green
-Write-Host 'The icon should appear in a few seconds; check the ^ overflow area of the taskbar.'
+# Check that it actually started
+$started = $false
+for ($i = 0; $i -lt 10 -and -not $started; $i++) {
+    Start-Sleep -Seconds 1
+    $started = [bool](Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
+        Where-Object { $_.CommandLine -like "*$target*" })
+}
+if ($started) {
+    Write-Host "Installed to $dir and running. It will start automatically when you sign in." -ForegroundColor Green
+    Write-Host 'If you don''t see the icon, check the ^ overflow area of the taskbar.'
+} else {
+    Write-Host "Installed to $dir, but it doesn't seem to have started." -ForegroundColor Yellow
+    Write-Host 'Run HPQuickModes.ps1 directly from this folder to see any error, or check the "HP Quick Modes" task in Task Scheduler.'
+}

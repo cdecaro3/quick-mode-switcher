@@ -9,10 +9,24 @@ Add-Type -AssemblyName System.Drawing
 Add-Type -Namespace HPQuickModes -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool DestroyIcon(System.IntPtr hIcon);'
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
+function Show-Error([string]$text) {
+    [void][System.Windows.Forms.MessageBox]::Show($text, 'HP Quick Modes', 'OK', 'Error')
+}
+
+# The BIOS command needs admin rights
+$id = [Security.Principal.WindowsIdentity]::GetCurrent()
+if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Show-Error 'HP Quick Modes needs administrator rights. Run it from an Administrator PowerShell, or install it with Install-HPQuickModes.ps1.'
+    exit 1
+}
+
 # Only one copy at a time
 $created = $false
 $script:mutex = New-Object System.Threading.Mutex($true, 'Local\HPQuickModes', [ref]$created)
-if (-not $created) { exit }
+if (-not $created) {
+    Write-Host 'HP Quick Modes is already running; look for its icon in the taskbar tray.'
+    exit
+}
 
 # Index = BIOS value
 $modeNames = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
@@ -43,6 +57,10 @@ $script:settings = Get-Settings
 # ---------- BIOS ----------
 $script:inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction SilentlyContinue | Select-Object -First 1
 $script:inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn -ErrorAction SilentlyContinue
+if (-not $script:inst -or -not $script:inCls) {
+    Show-Error "This laptop doesn't have HP's BIOS mode interface, so HP Quick Modes can't work here. tools\Test-Compatibility.ps1 shows details."
+    exit 1
+}
 
 function Invoke-Bios([uint32]$command, [byte[]]$data, [string]$method) {
     $din = New-CimInstance -CimClass $script:inCls -ClientOnly -Property @{
@@ -55,7 +73,7 @@ function Invoke-Bios([uint32]$command, [byte[]]$data, [string]$method) {
     (Invoke-CimMethod -InputObject $script:inst -MethodName $method -Arguments @{ InData = $din } -ErrorAction Stop).OutData
 }
 
-# Returns the mode (0-4), or -1 if the reply doesn't look like the one verified on this laptop
+# Returns the mode (0-4), or -1 if the reply doesn't look like the one HP Quick Modes expects
 function Read-Mode {
     try {
         $o = Invoke-Bios 1 ([byte[]](0, 0, 0, 0)) 'hpqBIOSInt128'
@@ -101,6 +119,7 @@ $script:menu  = New-Object System.Windows.Forms.ContextMenuStrip
 $script:items = @()
 $script:current = -1
 $script:warned  = $false
+$script:userPicked = $false   # set once a mode is picked from the menu
 
 function Show-Warning([string]$text) {
     $script:tray.ShowBalloonTip(6000, 'HP Quick Modes', $text, [System.Windows.Forms.ToolTipIcon]::Warning)
@@ -143,9 +162,7 @@ function Set-Mode([int]$mode, [switch]$NoWarning) {
     }
 }
 
-# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick when the
-# charger is plugged in or unplugged, several times over the first ~5 seconds. Switch back to the mode
-# picked here once it's done. Without My HP installed, the mode doesn't change, so this never acts.
+# Switch back to the mode picked in this menu if something else changed it
 function Restore-ChosenMode([bool]$warnIfStuck) {
     Update-State
     $want = $script:settings.lastMode
@@ -157,7 +174,7 @@ function Restore-ChosenMode([bool]$warnIfStuck) {
 for ($i = 0; $i -lt 5; $i++) {
     $it = New-Object System.Windows.Forms.ToolStripMenuItem($modeNames[$i])
     $it.Tag = $i
-    $it.add_Click({ param($s, $e) Set-Mode ([int]$s.Tag) })
+    $it.add_Click({ param($s, $e) $script:userPicked = $true; Set-Mode ([int]$s.Tag) })
     [void]$script:menu.Items.Add($it)
     $script:items += $it
 }
@@ -183,42 +200,70 @@ $script:tray.add_MouseUp({
     if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { $script:showMenu.Invoke($script:tray, $null) }
 })
 
-# Watch for the charger being plugged in or unplugged (a cheap check, no BIOS call).
-# Switching back right away just starts a back-and-forth with My HP, so wait until it's done (its last
-# re-apply came about 5 seconds in), switch back once, and check again later in case it was slow.
-$script:lastPower    = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
-$script:lastChangeAt = $null
-$script:checkIdx     = 0
-$checkAfter = @(7, 12, 20)   # seconds after a power change
+# ---------- Keeping your mode ----------
+# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's own setting when the
+# charger is plugged in or unplugged, several times over the first ~5 seconds. Switching back right away
+# just starts a back-and-forth, so after each such event, wait until it's done, switch back once, and
+# check again later in case it was slow. The same checks run after waking from sleep and after login,
+# in case My HP re-applies its setting then too. Without My HP installed, they never have to act.
+$checkAfter = @{
+    power   = @(7, 12, 20)            # seconds after the event
+    resume  = @(7, 12, 20)
+    startup = @(7, 12, 20, 40, 60)    # HP's background apps can start late after login
+}
+$script:eventKind = $null
+$script:eventAt   = $null
+$script:checkIdx  = 0
+$script:lastPower = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
+$script:lastTick  = Get-Date
+
+function Start-Checks([string]$kind) {
+    $script:eventKind = $kind
+    $script:eventAt   = Get-Date
+    $script:checkIdx  = 0
+}
+
+function Invoke-Check([bool]$isLast) {
+    if ($script:eventKind -eq 'startup' -and -not $script:settings.restoreAtLogin -and -not $script:userPicked) {
+        # Not re-applying at login: the mode the laptop started in (My HP's setting) is the one to keep,
+        # unless a mode has been picked from the menu since
+        Update-State
+        if ($script:current -ge 0 -and $script:current -ne $script:settings.lastMode) {
+            $script:settings.lastMode = $script:current
+            Save-Settings
+        }
+    } else {
+        Restore-ChosenMode $isLast   # warn only if the last check fails
+    }
+}
 
 $script:powerTimer = New-Object System.Windows.Forms.Timer
 $script:powerTimer.Interval = 500
 $script:powerTimer.add_Tick({
+    $now = Get-Date
+    # The timer doesn't run during sleep, so a long gap between ticks means the laptop just woke up
+    if (($now - $script:lastTick).TotalSeconds -gt 10) { Start-Checks 'resume' }
+    $script:lastTick = $now
+
     $p = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
     if ($p -ne $script:lastPower) {
-        $script:lastPower    = $p
-        $script:lastChangeAt = Get-Date
-        $script:checkIdx     = 0
+        $script:lastPower = $p
+        Start-Checks 'power'
     }
-    if ($script:lastChangeAt -and $script:checkIdx -lt $checkAfter.Count -and
-        ((Get-Date) - $script:lastChangeAt).TotalSeconds -ge $checkAfter[$script:checkIdx]) {
-        $script:checkIdx++
-        Restore-ChosenMode ($script:checkIdx -eq $checkAfter.Count)   # warn only if the last check fails
+
+    if ($script:eventAt) {
+        $delays = $checkAfter[$script:eventKind]
+        if ($script:checkIdx -lt $delays.Count -and ($now - $script:eventAt).TotalSeconds -ge $delays[$script:checkIdx]) {
+            $script:checkIdx++
+            Invoke-Check ($script:checkIdx -eq $delays.Count)
+        }
     }
 })
 
-# Refresh the icon every 30 seconds. If the mode changed away from a power change
-# (for example in My HP), treat it as the new chosen mode.
+# Refresh the icon every 30 seconds in case something else changes the mode
 $script:timer = New-Object System.Windows.Forms.Timer
 $script:timer.Interval = 30000
-$script:timer.add_Tick({
-    Update-State
-    $recent = $script:lastChangeAt -and ((Get-Date) - $script:lastChangeAt).TotalSeconds -lt 30
-    if (-not $recent -and $script:current -ge 0 -and $script:current -ne $script:settings.lastMode) {
-        $script:settings.lastMode = $script:current
-        Save-Settings
-    }
-})
+$script:timer.add_Tick({ Update-State })
 
 # ---------- Start ----------
 # Right after login the BIOS interface can take a moment, so retry the first read briefly
@@ -228,12 +273,19 @@ $script:tray.Icon = $script:warnIcon
 $script:tray.Visible = $true
 Update-State
 
-if ($script:current -ge 0 -and $script:settings.restoreAtLogin -and
-    $script:settings.lastMode -ge 0 -and $script:settings.lastMode -ne $script:current) {
-    Set-Mode $script:settings.lastMode
+if ($script:current -ge 0) {
+    if ($script:settings.lastMode -lt 0 -or -not $script:settings.restoreAtLogin) {
+        # First run, or not re-applying at login: keep the mode the laptop started in
+        $script:settings.lastMode = $script:current
+        Save-Settings
+    } elseif ($script:settings.lastMode -ne $script:current) {
+        Set-Mode $script:settings.lastMode
+    }
 }
+Start-Checks 'startup'
 
 $script:timer.Start()
+$script:lastTick = Get-Date
 $script:powerTimer.Start()
 [System.Windows.Forms.Application]::Run()
 
