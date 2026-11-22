@@ -66,6 +66,8 @@ The installer:
 
 The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
 
+After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\HPQuickModes`. Keep the folder only if you want the scripts in `tools/`.
+
 **To try it without installing,** run this from the same folder instead. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
