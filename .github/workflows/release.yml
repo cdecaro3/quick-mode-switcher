@@ -1,0 +1,49 @@
+# When you publish a release, this builds QuickModeSwitcher-<version>.zip and attaches it.
+# The zip holds only what's needed to install, with the files at the top level, so Windows'
+# Extract All gives a single QuickModeSwitcher-<version> folder.
+name: Attach release zip
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # lets it attach files to the release
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the tag matches the app's version
+        run: |
+          tag="$GITHUB_REF_NAME"
+          version="${tag#v}"
+          app=$(grep -oP '^\$AppVersion\s*=\s*\x27\K[^\x27]+' QuickModeSwitcher.ps1 || true)
+          if [ "$version" != "$app" ]; then
+            echo "::error::Tag $tag doesn't match \$AppVersion '$app' in QuickModeSwitcher.ps1. Bump \$AppVersion (or fix the tag), then try again."
+            exit 1
+          fi
+          echo "ZIP=QuickModeSwitcher-$version.zip" >> "$GITHUB_ENV"
+
+      - name: Build the zip
+        run: |
+          git archive --format=zip -o "$ZIP" HEAD \
+            Install.cmd Uninstall.cmd \
+            QuickModeSwitcher.ps1 Install-QuickModeSwitcher.ps1 Uninstall-QuickModeSwitcher.ps1 \
+            README.md tools
+          # The .cmd launchers only work with Windows line endings
+          for f in Install.cmd Uninstall.cmd; do
+            if [ "$(unzip -p "$ZIP" "$f" | tr -cd '\r' | wc -c)" -eq 0 ]; then
+              echo "::error::$f lost its Windows line endings"
+              exit 1
+            fi
+          done
+          unzip -l "$ZIP"
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber

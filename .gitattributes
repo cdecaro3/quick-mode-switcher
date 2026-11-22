@@ -3,5 +3,6 @@
 
 # Leave these out of GitHub's "Source code" downloads; installing doesn't need them
 docs/ export-ignore
+.github/ export-ignore
 .gitattributes export-ignore
 .gitignore export-ignore
