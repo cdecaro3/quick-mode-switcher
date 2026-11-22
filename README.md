@@ -4,8 +4,6 @@
 
 Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. Other HP laptops may work; see [Other HP laptops](#other-hp-laptops). This is an independent project, not made by or affiliated with HP.
 
-> **Status:** early. The BIOS commands are verified on the laptop above; the tray app is still being tested.
-
 ## Modes
 
 Each mode is a setting in the laptop's BIOS that controls fan speed and CPU performance together. They're the same modes myHP offers, and the descriptions below follow myHP's.
@@ -58,9 +56,10 @@ This app won't work on Omen and Victus laptops, which use different values. Othe
 
 ## Install
 
-1. On this page, click **Code → Download ZIP**, then extract it (or `git clone` the repo).
-2. In the extracted folder, double-click **Install.cmd** and approve the administrator prompt. If Windows warns that the file came from the internet, choose **Run** (or **More info → Run anyway**).
-3. A window shows what the installer did. Press Enter to close it.
+1. Go to [Releases](../../releases/latest) and download **QuickModeSwitcher-*version*.zip** from the latest release.
+2. Right-click the downloaded file and choose **Extract All**.
+3. In the extracted folder, double-click **Install.cmd** and approve the administrator prompt. If Windows warns that the file came from the internet, choose **Run** (or **More info → Run anyway**).
+4. A window shows what the installer did. Press Enter to close it.
 
 The installer:
 
@@ -76,14 +75,14 @@ If you'd rather use the command line, run `powershell -ExecutionPolicy Bypass -F
 
 After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\QuickModeSwitcher`. Keep the folder only if you want the scripts in `tools/`.
 
-**To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, adjusting the folder path to where you extracted it. It runs until you choose Exit, and doesn't start again on its own.
+**To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, using the folder you extracted (the version number in its name will match the one you downloaded). It runs until you choose Exit, and doesn't start again on its own.
 
 ```
-cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
+cd "$env:USERPROFILE\Downloads\QuickModeSwitcher-0.1.0"
 powershell -ExecutionPolicy Bypass -File .\QuickModeSwitcher.ps1
 ```
 
-**To update,** download the new version and double-click its **Install.cmd**. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
+**To update,** download the zip from the newest release, extract it and double-click its **Install.cmd**. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
 
 **To uninstall,** go to Settings → Apps → Installed apps → **Quick Mode Switcher** → Uninstall, or double-click **Uninstall.cmd** in the downloaded folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
 
@@ -111,10 +110,10 @@ If myHP comes back anyway, this app keeps working; you'll just see the brief swi
 
 ## Tools
 
-Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the downloaded folder and run the script, for example:
+Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the extracted folder and run the script, for example:
 
 ```
-cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
+cd "$env:USERPROFILE\Downloads\QuickModeSwitcher-0.1.0"
 powershell -ExecutionPolicy Bypass -File .\tools\Test-Compatibility.ps1
 ```
 

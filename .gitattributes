@@ -1,2 +1,7 @@
 # Windows batch files need Windows line endings
 *.cmd text eol=crlf
+
+# Leave these out of GitHub's "Source code" downloads; installing doesn't need them
+docs/ export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
