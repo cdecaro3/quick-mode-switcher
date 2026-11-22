@@ -22,6 +22,8 @@ Each mode is a setting in the laptop's BIOS that controls fan speed and CPU perf
 
 Left- or right-click the tray icon to open the menu:
 
+![The Quick Mode Switcher menu, with Balanced and "Re-apply my mode at sign-in" checked](docs/menu.png)
+
 - **The five modes.** The checkmark shows the current one. The mode you pick here is *your mode*, and the app keeps the laptop on it.
 - **Re-apply my mode at sign-in.** On by default: after a restart, the app switches back to your mode a few seconds after you sign in. Turn it off to keep whatever mode the laptop starts in.
 - **Exit.** Closes the app. If it's installed, it starts again the next time you sign in.

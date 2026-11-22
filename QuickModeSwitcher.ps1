@@ -4,6 +4,11 @@
 # tools\Test-ModeSwitch.ps1. Needs admin rights; Install-QuickModeSwitcher.ps1 makes it start at login
 # without a prompt.
 
+param(
+    [string]$ExportIcons,     # folder to save the icons to as PNGs, then exit
+    [int]$IconSize = 64
+)
+
 $AppVersion = '0.1.0'   # shown in Windows' Installed apps; bump it with each release
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -14,6 +19,85 @@ Add-Type -Namespace QuickModeSwitcher -Name Native -MemberDefinition @'
 '@
 # Draw at the screen's real scale, so the icon and menu are sharp instead of stretched
 [void][QuickModeSwitcher.Native]::SetProcessDPIAware()
+
+# Index = BIOS value
+$modeNames = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
+$letters   = @('P', 'B', 'C', 'Q', 'S')
+# Red = power, gray = neutral, blue = cold, violet = calm, green = eco. All dark enough for a white letter.
+$colors    = @('#C92A2A', '#495057', '#1971C2', '#6741D9', '#2B8A3E')
+$warnColor = '#F59F00'   # amber, with a black '!', so it can't be mistaken for Performance's red
+
+# ---------- Icons: a colored circle with the mode's letter ----------
+# The letter is centered on its real outline (not the font's text box, which includes empty space),
+# and sized to the height of a capital H so all letters match.
+function New-ModeBitmap([string]$letter, [string]$hex, [string]$letterColor, [int]$size) {
+    $bmp = New-Object System.Drawing.Bitmap $size, $size
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode   = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $g.Clear([System.Drawing.Color]::Transparent)
+
+    # Circle, with a slightly darker rim so it stands out on both light and dark taskbars
+    $color = [System.Drawing.ColorTranslator]::FromHtml($hex)
+    $rim   = [System.Drawing.Color]::FromArgb(255, [int]($color.R * 0.65), [int]($color.G * 0.65), [int]($color.B * 0.65))
+    $brush = New-Object System.Drawing.SolidBrush $color
+    $pen   = New-Object System.Drawing.Pen($rim, [float][Math]::Max(1, $size / 16))
+    [float]$d = $size - 1
+    [float]$w = $pen.Width
+    $g.FillEllipse($brush, [float]0, [float]0, $d, $d)
+    $g.DrawEllipse($pen, [float]($w / 2), [float]($w / 2), [float]($d - $w), [float]($d - $w))
+
+    # Letter
+    $family = New-Object System.Drawing.FontFamily 'Segoe UI'
+    $style  = [int][System.Drawing.FontStyle]::Bold
+    $fmt    = [System.Drawing.StringFormat]::GenericTypographic
+    $ref = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $ref.AddString('H', $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $path.AddString($letter, $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
+    $rb = $ref.GetBounds()
+    $lb = $path.GetBounds()
+    $scale = ($size * 0.52) / $rb.Height
+    $m = New-Object System.Drawing.Drawing2D.Matrix
+    $m.Translate([float]($size / 2), [float]($size / 2))                               # 3. move to the icon's center
+    $m.Scale([float]$scale, [float]$scale)                                             # 2. scale to size
+    $m.Translate([float](-($lb.X + $lb.Width / 2)), [float](-($rb.Y + $rb.Height / 2)))  # 1. center the letter at 0,0
+    $path.Transform($m)
+    $letterBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromName($letterColor))
+    $g.FillPath($letterBrush, $path)
+
+    $g.Dispose(); $brush.Dispose(); $pen.Dispose(); $letterBrush.Dispose()
+    $path.Dispose(); $ref.Dispose(); $m.Dispose(); $family.Dispose()
+    return $bmp
+}
+
+# Tray icon, drawn at the tray's actual icon size
+function New-ModeIcon([string]$letter, [string]$hex, [string]$letterColor = 'White') {
+    $bmp = New-ModeBitmap $letter $hex $letterColor $script:iconSize
+    $h = $bmp.GetHicon()
+    $icon = [System.Drawing.Icon]::FromHandle($h).Clone()
+    [void][QuickModeSwitcher.Native]::DestroyIcon($h)
+    $bmp.Dispose()
+    return $icon
+}
+
+# -ExportIcons <folder>: save every icon as a PNG (for the README) and exit. Doesn't need admin rights.
+if ($ExportIcons) {
+    $out = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ExportIcons)
+    New-Item -ItemType Directory -Path $out -Force | Out-Null
+    $files = @('performance', 'balanced', 'cool', 'quiet', 'power-saver')
+    for ($i = 0; $i -lt 5; $i++) {
+        $bmp = New-ModeBitmap $letters[$i] $colors[$i] 'White' $IconSize
+        $bmp.Save((Join-Path $out "$($files[$i]).png"), [System.Drawing.Imaging.ImageFormat]::Png)
+        $bmp.Dispose()
+    }
+    $bmp = New-ModeBitmap '!' $warnColor 'Black' $IconSize
+    $bmp.Save((Join-Path $out 'warning.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+    $bmp.Dispose()
+    Write-Host "Saved 6 icons ($IconSize x $IconSize pixels) to $out"
+    exit
+}
+
 [System.Windows.Forms.Application]::EnableVisualStyles()
 # If something unexpected fails inside the menu or a timer, keep running instead of showing a crash dialog
 [System.Windows.Forms.Application]::SetUnhandledExceptionMode([System.Windows.Forms.UnhandledExceptionMode]::CatchException)
@@ -37,12 +121,6 @@ if (-not $created) {
     Write-Host 'Quick Mode Switcher is already running; look for its icon in the taskbar tray.'
     exit
 }
-
-# Index = BIOS value
-$modeNames = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
-$letters   = @('P', 'B', 'C', 'Q', 'S')
-# Red = power, gray = neutral, blue = cold, violet = calm, green = eco. All dark enough for a white letter.
-$colors    = @('#C92A2A', '#495057', '#1971C2', '#6741D9', '#2B8A3E')
 
 # ---------- Settings (last mode, re-apply at login) ----------
 $settingsPath = Join-Path $PSScriptRoot 'settings.json'
@@ -100,59 +178,10 @@ function Write-Mode([int]$mode) {
     try { [int](Invoke-Bios 2 ([byte[]]($mode, 0, 0, 0)) 'hpqBIOSInt0').rwReturnCode } catch { -1 }
 }
 
-# ---------- Icons: a colored circle with the mode's letter ----------
-# Drawn at the tray's actual icon size. The letter is centered on its real outline (not the font's
-# text box, which includes empty space), and sized to the height of a capital H so all letters match.
+# ---------- Tray icons ----------
 $script:iconSize = [Math]::Max(16, [System.Windows.Forms.SystemInformation]::SmallIconSize.Width)
-
-function New-ModeIcon([string]$letter, [string]$hex, [string]$letterColor = 'White') {
-    $size = $script:iconSize
-    $bmp = New-Object System.Drawing.Bitmap $size, $size
-    $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.SmoothingMode   = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-    $g.Clear([System.Drawing.Color]::Transparent)
-
-    # Circle, with a slightly darker rim so it stands out on both light and dark taskbars
-    $color = [System.Drawing.ColorTranslator]::FromHtml($hex)
-    $rim   = [System.Drawing.Color]::FromArgb(255, [int]($color.R * 0.65), [int]($color.G * 0.65), [int]($color.B * 0.65))
-    $brush = New-Object System.Drawing.SolidBrush $color
-    $pen   = New-Object System.Drawing.Pen($rim, [float][Math]::Max(1, $size / 16))
-    [float]$d = $size - 1
-    [float]$w = $pen.Width
-    $g.FillEllipse($brush, [float]0, [float]0, $d, $d)
-    $g.DrawEllipse($pen, [float]($w / 2), [float]($w / 2), [float]($d - $w), [float]($d - $w))
-
-    # Letter
-    $family = New-Object System.Drawing.FontFamily 'Segoe UI'
-    $style  = [int][System.Drawing.FontStyle]::Bold
-    $fmt    = [System.Drawing.StringFormat]::GenericTypographic
-    $ref = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $ref.AddString('H', $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
-    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
-    $path.AddString($letter, $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
-    $rb = $ref.GetBounds()
-    $lb = $path.GetBounds()
-    $scale = ($size * 0.52) / $rb.Height
-    $m = New-Object System.Drawing.Drawing2D.Matrix
-    $m.Translate([float]($size / 2), [float]($size / 2))                               # 3. move to the icon's center
-    $m.Scale([float]$scale, [float]$scale)                                             # 2. scale to size
-    $m.Translate([float](-($lb.X + $lb.Width / 2)), [float](-($rb.Y + $rb.Height / 2)))  # 1. center the letter at 0,0
-    $path.Transform($m)
-    $letterBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromName($letterColor))
-    $g.FillPath($letterBrush, $path)
-    $letterBrush.Dispose()
-
-    $g.Dispose(); $brush.Dispose(); $pen.Dispose(); $path.Dispose(); $ref.Dispose(); $m.Dispose(); $family.Dispose()
-    $h = $bmp.GetHicon()
-    $icon = [System.Drawing.Icon]::FromHandle($h).Clone()
-    [void][QuickModeSwitcher.Native]::DestroyIcon($h)
-    $bmp.Dispose()
-    return $icon
-}
-
 $script:icons    = @(for ($i = 0; $i -lt 5; $i++) { New-ModeIcon $letters[$i] $colors[$i] })
-$script:warnIcon = New-ModeIcon '!' '#F59F00' 'Black'   # amber warning, so it can't be mistaken for Performance's red
+$script:warnIcon = New-ModeIcon '!' $warnColor 'Black'
 
 # ---------- Tray and menu ----------
 $script:tray  = New-Object System.Windows.Forms.NotifyIcon
