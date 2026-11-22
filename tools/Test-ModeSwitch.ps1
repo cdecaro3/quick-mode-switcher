@@ -1,8 +1,8 @@
-# hp-mode-write-test.ps1
+# Test-ModeSwitch.ps1
 # Tests whether the BIOS accepts the "set mode" command. Asks before every change.
 # Sends only the mode values My HP itself uses (00-04) and ends on the mode you started in.
-# Run in an Administrator PowerShell:
-#   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\hp-mode-write-test.ps1"
+# Run in an Administrator PowerShell from the repo folder:
+#   powershell -ExecutionPolicy Bypass -File .\tools\Test-ModeSwitch.ps1
 
 $names = @{ 0 = 'Performance'; 1 = 'Balanced'; 2 = 'Cool'; 3 = 'Quiet'; 4 = 'Power Saver' }
 
@@ -50,10 +50,8 @@ function Finish {
     $text = $log -join "`r`n"
     try {
         Set-Clipboard -Value $text
-        Write-Host "`nCopied to clipboard. Paste it back to Claude." -ForegroundColor Green
-    } catch {
-        Write-Host "`nCopy the lines above and paste them back to Claude."
-    }
+        Write-Host "`nResults copied to the clipboard." -ForegroundColor Green
+    } catch {}
     exit
 }
 
@@ -96,8 +94,8 @@ $rc = Write-Mode (Get-ModeBytes $target)
 Start-Sleep -Seconds 3
 $now = Read-Mode
 Log "Step 2, set $(Get-ModeName $target) -> rwReturnCode=$rc, now reads $(Get-ModeName $now[0]) [$(Hex $now)]"
-$seen = Read-Host "Close and reopen My HP. Does it show $(Get-ModeName $target)? (y/n)"
-Log "Step 2, My HP shows $(Get-ModeName $target): $seen"
+$seen = Read-Host "If you have My HP, close and reopen it. Does it show $(Get-ModeName $target)? (y/n, or Enter to skip)"
+if ($seen) { Log "Step 2, My HP shows $(Get-ModeName $target): $seen" }
 
 # --- Step 3: switch back to where you started ---
 if (Ask-Ok "Step 3 of 3: switch back to $(Get-ModeName $orig[0]).") {

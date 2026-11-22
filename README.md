@@ -44,11 +44,11 @@ powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1 -Uninstall
 
 ## Other HP laptops
 
-Check yours before installing. These scripts are in `tools/` and run the same way as above:
+Check yours before installing, in this order (the scripts are described under [Tools](#tools)):
 
-1. `hp-mode-check.ps1` is read-only. Your laptop is likely compatible if the `read 0x4C` lines show `rwReturnCode=0`.
-2. `hp-mode-sample.ps1` is read-only. It records the BIOS value for each mode as you switch in My HP. The first byte should match the table below.
-3. `hp-mode-write-test.ps1` changes the mode once and switches back, asking before each step.
+1. `Test-Compatibility.ps1` says whether the BIOS supports the mode command.
+2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value in the [table below](#how-it-works).
+3. `Test-ModeSwitch.ps1` changes the mode once and switches back, asking before each step.
 
 HP Quick Modes won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
 
@@ -78,7 +78,25 @@ To remove My HP:
 
 If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again.
 
-To see this in action, run `tools/hp-quick-modes-test.ps1` (read-only) while HP Quick Modes is running, then plug in and unplug a few times. It shows each switch and times how long My HP's pick lasts before HP Quick Modes switches back.
+To see this for yourself, use `Watch-PlugUnplug.ps1`. If the mode changes on plug/unplug on another model, `Find-ModeChanger.ps1` finds which HP program is doing it.
+
+## Tools
+
+Helper scripts in `tools/`, for checking compatibility and seeing what's going on. Each one runs in an Administrator PowerShell from the repo folder, for example:
+
+```
+powershell -ExecutionPolicy Bypass -File .\tools\Test-Compatibility.ps1
+```
+
+Each copies its results to the clipboard when it finishes.
+
+| Script | What it does | Changes anything? |
+|---|---|---|
+| `Test-Compatibility.ps1` | Shows the model and BIOS, whether the BIOS answers the mode command, and the HP software running with its memory use. | No |
+| `Get-ModeValues.ps1` | You pick each mode in My HP and type its name; it checks the BIOS value against the table above. Needs My HP. | No |
+| `Test-ModeSwitch.ps1` | Re-sends the current mode, switches to another, then switches back. Asks before each step. | Yes, and switches back |
+| `Watch-PlugUnplug.ps1` | Logs mode changes as you plug in and unplug, and how long HP Quick Modes takes to switch back. | No |
+| `Find-ModeChanger.ps1` | Stops one HP app's programs at a time and watches plug/unplug, to find which one changes the mode. Asks before each app. | Stops programs until the next restart |
 
 ## Safety
 

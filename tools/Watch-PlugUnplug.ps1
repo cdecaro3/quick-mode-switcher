@@ -1,10 +1,10 @@
-# hp-quick-modes-test.ps1
-# Read-only. Checks that HP Quick Modes switches back after My HP changes the mode when the
-# charger is plugged in or unplugged, and times how long each step takes.
-# Setup: pick one mode in My HP (for example Balanced), then a different one in the HP Quick Modes
-# tray menu (for example Quiet), and leave HP Quick Modes running.
-# Run in an Administrator PowerShell:
-#   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\hp-quick-modes-test.ps1"
+# Watch-PlugUnplug.ps1
+# Read-only. Shows what happens to the mode when the charger is plugged in or unplugged: whether
+# My HP changes it, and how long HP Quick Modes takes to switch it back. It changes nothing.
+# To see the switch-back: pick one mode in My HP (for example Balanced), then a different one in the
+# HP Quick Modes tray menu (for example Quiet), and leave HP Quick Modes running.
+# Run in an Administrator PowerShell from the repo folder:
+#   powershell -ExecutionPolicy Bypass -File .\tools\Watch-PlugUnplug.ps1
 # Then unplug and plug in 2-3 times, about 10 seconds apart. Press Enter to stop.
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -94,7 +94,5 @@ Log "Mode now: $(Show-Mode $end) $(if ($end -eq $want) { '(your mode)' } else { 
 $text = $log -join "`r`n"
 try {
     Set-Clipboard -Value $text
-    Write-Host "`nCopied to clipboard. Paste it back to Claude." -ForegroundColor Green
-} catch {
-    Write-Host "`nCopy the lines above and paste them back to Claude."
-}
+    Write-Host "`nResults copied to the clipboard." -ForegroundColor Green
+} catch {}

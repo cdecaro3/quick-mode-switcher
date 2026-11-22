@@ -1,7 +1,7 @@
 # HPQuickModes.ps1
 # System-tray menu for switching the HP Spectre x360 14-eu000's modes (fans, power limits).
 # Sends only two BIOS commands: read the mode, and set a mode (00-04), the same ones tested with
-# hp-mode-write-test.ps1. Needs admin rights; Install-HPQuickModes.ps1 makes it start at login
+# tools\Test-ModeSwitch.ps1. Needs admin rights; Install-HPQuickModes.ps1 makes it start at login
 # without a prompt.
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -123,7 +123,7 @@ function Update-State {
         $script:tray.Text = 'HP Quick Modes: BIOS reply not recognized'
         if (-not $script:warned) {
             $script:warned = $true
-            Show-Warning 'The BIOS reply did not look like the one tested on this laptop, so switching is off. Run hp-mode-sample.ps1 to see what changed.'
+            Show-Warning 'The BIOS reply did not look like the one HP Quick Modes expects, so switching is off. Run tools\Get-ModeValues.ps1 to see what changed.'
         }
     }
 }

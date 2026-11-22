@@ -1,9 +1,9 @@
 # Install-HPQuickModes.ps1
 # Installs HPQuickModes.ps1 so it starts at login with admin rights and no prompt.
 # Run in an Administrator PowerShell, with HPQuickModes.ps1 in the same folder as this file:
-#   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\Install-HPQuickModes.ps1"
+#   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
 # To remove everything it set up:
-#   powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Downloads\Install-HPQuickModes.ps1" -Uninstall
+#   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1 -Uninstall
 
 param([switch]$Uninstall)
 
