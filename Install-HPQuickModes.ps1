@@ -1,12 +1,13 @@
 # Install-HPQuickModes.ps1
 # Installs HPQuickModes.ps1 so it starts at sign-in with admin rights and no prompt, and adds an
 # entry to Windows' Installed apps so it can be uninstalled from Settings.
-# Run in an Administrator PowerShell, from the folder with HPQuickModes.ps1 and Uninstall-HPQuickModes.ps1:
+# Easiest: double-click Install.cmd. Or, from the folder with HPQuickModes.ps1 and Uninstall-HPQuickModes.ps1:
 #   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
+# It asks for admin rights if it doesn't have them. -Pause keeps the window open at the end.
 # To remove everything it set up, uninstall from Settings > Apps > Installed apps, or run
 # Uninstall-HPQuickModes.ps1 (-Uninstall here does the same).
 
-param([switch]$Uninstall)
+param([switch]$Uninstall, [switch]$Pause)
 
 $taskName = 'HP Quick Modes'
 # Program Files is admin-only, so nothing without admin rights can change the script that runs as admin
@@ -14,10 +15,23 @@ $dir     = Join-Path $env:ProgramFiles 'HPQuickModes'
 $target  = Join-Path $dir 'HPQuickModes.ps1'
 $appsKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\HPQuickModes'
 
+function Exit-Installer([int]$code) {
+    if ($Pause) { Read-Host "`nPress Enter to close" | Out-Null }
+    exit $code
+}
+
+# Ask for admin rights if this was started without them, by re-running it elevated
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host 'Run this from an Administrator PowerShell.' -ForegroundColor Red
-    exit 1
+    $relaunchArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Pause"
+    if ($Uninstall) { $relaunchArgs += ' -Uninstall' }
+    try {
+        Start-Process powershell.exe -Verb RunAs -ArgumentList $relaunchArgs
+    } catch {
+        Write-Host 'Installing HP Quick Modes needs administrator rights.' -ForegroundColor Red
+        Exit-Installer 1
+    }
+    exit
 }
 
 function Stop-Tray {
@@ -37,7 +51,7 @@ $src       = Join-Path $PSScriptRoot 'HPQuickModes.ps1'
 $uninstSrc = Join-Path $PSScriptRoot 'Uninstall-HPQuickModes.ps1'
 if (-not (Test-Path $src) -or -not (Test-Path $uninstSrc)) {
     Write-Host "HPQuickModes.ps1 and Uninstall-HPQuickModes.ps1 need to be in the same folder as this installer ($PSScriptRoot)." -ForegroundColor Red
-    exit 1
+    Exit-Installer 1
 }
 
 # Does this laptop answer the mode command the way HP Quick Modes expects? (read-only)
@@ -58,7 +72,7 @@ function Test-Bios {
 }
 if (-not (Test-Bios)) {
     Write-Host "This laptop doesn't seem to support HP Quick Modes. tools\Test-Compatibility.ps1 shows details." -ForegroundColor Yellow
-    if ((Read-Host 'Install anyway? (y/n)') -ne 'y') { exit 1 }
+    if ((Read-Host 'Install anyway? (y/n)') -ne 'y') { Exit-Installer 1 }
 }
 
 # Versions, to show what's being replaced
@@ -116,7 +130,7 @@ try {
     Write-Host "Install failed: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host 'Run the installer again. To remove what was set up so far, run Uninstall-HPQuickModes.ps1.'
     Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue   # restart the previous version if there is one
-    exit 1
+    Exit-Installer 1
 }
 $ErrorActionPreference = 'Continue'
 
@@ -134,3 +148,5 @@ if ($started) {
     Write-Host "Installed to $dir, but it doesn't seem to have started." -ForegroundColor Yellow
     Write-Host 'Run HPQuickModes.ps1 directly from this folder to see any error, or check the "HP Quick Modes" task in Task Scheduler.'
 }
+
+Exit-Installer 0

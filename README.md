@@ -57,15 +57,8 @@ HP Quick Modes won't work on Omen and Victus laptops, which use different values
 ## Install
 
 1. On this page, click **Code → Download ZIP**, then extract it (or `git clone` the repo).
-2. Right-click the Start button and choose **Terminal (Admin)**.
-3. Go to the extracted folder, for example:
-   ```
-   cd "$env:USERPROFILE\Downloads\hp-quick-modes-main"
-   ```
-4. Run the installer:
-   ```
-   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
-   ```
+2. In the extracted folder, double-click **Install.cmd** and approve the administrator prompt. If Windows warns that the file came from the internet, choose **Run** (or **More info → Run anyway**).
+3. A window shows what the installer did. Press Enter to close it.
 
 The installer:
 
@@ -77,17 +70,20 @@ The installer:
 
 The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
 
+If you'd rather use the command line, run `powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1` from the folder instead.
+
 After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\HPQuickModes`. Keep the folder only if you want the scripts in `tools/`.
 
-**To try it without installing,** run this in the same Administrator terminal and folder instead. It runs until you choose Exit, and doesn't start again on its own.
+**To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, adjusting the folder path to where you extracted it. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
+cd "$env:USERPROFILE\Downloads\hp-quick-modes-main"
 powershell -ExecutionPolicy Bypass -File .\HPQuickModes.ps1
 ```
 
-**To update,** download the new version and run its installer the same way. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
+**To update,** download the new version and double-click its **Install.cmd**. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
 
-**To uninstall,** go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
+**To uninstall,** go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or double-click **Uninstall.cmd** in the downloaded folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
 
 ## If you keep My HP
 
@@ -113,9 +109,10 @@ If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the br
 
 ## Tools
 
-Helper scripts in `tools/`, for checking compatibility and seeing what's going on. Each one runs in an Administrator PowerShell from the repo folder, for example:
+Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the downloaded folder and run the script, for example:
 
 ```
+cd "$env:USERPROFILE\Downloads\hp-quick-modes-main"
 powershell -ExecutionPolicy Bypass -File .\tools\Test-Compatibility.ps1
 ```
 
