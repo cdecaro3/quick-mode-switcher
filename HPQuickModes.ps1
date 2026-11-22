@@ -4,6 +4,8 @@
 # tools\Test-ModeSwitch.ps1. Needs admin rights; Install-HPQuickModes.ps1 makes it start at login
 # without a prompt.
 
+$AppVersion = '0.1.0'   # shown in Windows' Installed apps; bump it with each release
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 Add-Type -Namespace HPQuickModes -Name Native -MemberDefinition @'

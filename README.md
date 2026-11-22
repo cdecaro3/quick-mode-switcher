@@ -72,9 +72,9 @@ The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar t
 powershell -ExecutionPolicy Bypass -File .\HPQuickModes.ps1
 ```
 
-**To update,** download the new version and run the installer again. Your settings are kept.
+**To update,** download the new version and run its installer the same way. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
 
-**To uninstall,** go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one removes the app, its scheduled task and its settings. The laptop stays in whatever mode it's in.
+**To uninstall,** go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
 
 ## If you keep My HP
 
@@ -105,6 +105,7 @@ HP Quick Modes won't work on Omen and Victus laptops, which use different values
 - **Nothing happens when I run `HPQuickModes.ps1`.** It's already running, probably the installed copy; look for its icon.
 - **The icon is a red `!`.** The laptop's reply wasn't what HP Quick Modes expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
 - **The mode changes on its own.** That's My HP (see [If you keep My HP](#if-you-keep-my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
+- **An old icon stays in the tray after updating or uninstalling.** Windows removes it as soon as you move the mouse over it.
 - **Settings** are in `settings.json` next to the app, which is `C:\Program Files\HPQuickModes` when installed.
 
 ## Tools

@@ -61,20 +61,11 @@ if (-not (Test-Bios)) {
     if ((Read-Host 'Install anyway? (y/n)') -ne 'y') { exit 1 }
 }
 
-Stop-Tray
-New-Item -ItemType Directory -Path $dir -Force | Out-Null
-Copy-Item -Path $src -Destination $target -Force
-Copy-Item -Path $uninstSrc -Destination $dir -Force
-Get-ChildItem -Path $dir -Filter '*.ps1' | Unblock-File
-
-# Entry in Settings > Apps > Installed apps, so it can be uninstalled like any other app
-New-Item -Path $appsKey -Force | Out-Null
-Set-ItemProperty -Path $appsKey -Name DisplayName     -Value 'HP Quick Modes'
-Set-ItemProperty -Path $appsKey -Name Publisher       -Value 'HP Quick Modes (unofficial, not made by HP)'
-Set-ItemProperty -Path $appsKey -Name InstallLocation -Value $dir
-Set-ItemProperty -Path $appsKey -Name UninstallString -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $dir 'Uninstall-HPQuickModes.ps1')`""
-Set-ItemProperty -Path $appsKey -Name NoModify        -Value 1 -Type DWord
-Set-ItemProperty -Path $appsKey -Name NoRepair        -Value 1 -Type DWord
+# Versions, to show what's being replaced
+$newVersion = if ((Get-Content $src -Raw) -match "\`$AppVersion\s*=\s*'([^']+)'") { $matches[1] } else { 'unknown' }
+$oldVersion = (Get-ItemProperty -Path $appsKey -ErrorAction SilentlyContinue).DisplayVersion
+if ($oldVersion) { Write-Host "Updating HP Quick Modes $oldVersion to $newVersion." }
+else             { Write-Host "Installing HP Quick Modes $newVersion." }
 
 # The task starts the app for whoever is signed in, which may not be the account running this installer
 $user = (Get-CimInstance Win32_ComputerSystem).UserName
@@ -82,18 +73,52 @@ if (-not $user) { $user = $id.Name }
 if ($user -ne $id.Name) {
     Write-Host "Note: you're running this as $($id.Name), but $user is signed in. HP Quick Modes will start when $user signs in, and that account needs to be an administrator for it to work." -ForegroundColor Yellow
 }
-# conhost --headless runs PowerShell with no console window at all
-$action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\conhost.exe" `
-    -Argument "--headless powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$target`""
-$trigger   = New-ScheduledTaskTrigger -AtLogOn -User $user
-$principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
-# Defaults would stop it on battery and after 3 days, so turn those off
-$settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-    -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
 
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal `
-    -Settings $settings -Description 'Tray menu for switching HP laptop modes' -Force | Out-Null
-Start-ScheduledTask -TaskName $taskName
+try {
+    $ErrorActionPreference = 'Stop'
+
+    # Stop the running copy, then replace the old scripts (settings.json is kept)
+    Stop-Tray
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    Get-ChildItem -Path $dir -Filter '*.ps1' | Remove-Item -Force
+    Copy-Item -Path $src -Destination $target -Force
+    Copy-Item -Path $uninstSrc -Destination $dir -Force
+    Get-ChildItem -Path $dir -Filter '*.ps1' | Unblock-File
+
+    # Entry in Settings > Apps > Installed apps, so it can be uninstalled like any other app
+    New-Item -Path $appsKey -Force | Out-Null
+    Set-ItemProperty -Path $appsKey -Name DisplayName     -Value 'HP Quick Modes'
+    Set-ItemProperty -Path $appsKey -Name DisplayVersion  -Value $newVersion
+    Set-ItemProperty -Path $appsKey -Name Publisher       -Value 'HP Quick Modes (unofficial, not made by HP)'
+    Set-ItemProperty -Path $appsKey -Name InstallLocation -Value $dir
+    Set-ItemProperty -Path $appsKey -Name UninstallString -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $dir 'Uninstall-HPQuickModes.ps1')`""
+    Set-ItemProperty -Path $appsKey -Name NoModify        -Value 1 -Type DWord
+    Set-ItemProperty -Path $appsKey -Name NoRepair        -Value 1 -Type DWord
+
+    # Remove any other task that runs HP Quick Modes (for example, from a version with a different task name)
+    Get-ScheduledTask -ErrorAction SilentlyContinue |
+        Where-Object { $_.TaskName -ne $taskName -and (@($_.Actions | ForEach-Object { $_.Arguments }) -like '*HPQuickModes.ps1*') } |
+        ForEach-Object { Unregister-ScheduledTask -InputObject $_ -Confirm:$false }
+
+    # conhost --headless runs PowerShell with no console window at all
+    $action = New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\conhost.exe" `
+        -Argument "--headless powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$target`""
+    $trigger   = New-ScheduledTaskTrigger -AtLogOn -User $user
+    $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+    # Defaults would stop it on battery and after 3 days, so turn those off
+    $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+        -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
+
+    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal `
+        -Settings $settings -Description 'Tray menu for switching HP laptop modes' -Force | Out-Null
+    Start-ScheduledTask -TaskName $taskName
+} catch {
+    Write-Host "Install failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host 'Run the installer again. To remove what was set up so far, run Uninstall-HPQuickModes.ps1.'
+    Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue   # restart the previous version if there is one
+    exit 1
+}
+$ErrorActionPreference = 'Continue'
 
 # Check that it actually started
 $started = $false
@@ -103,7 +128,7 @@ for ($i = 0; $i -lt 10 -and -not $started; $i++) {
         Where-Object { $_.CommandLine -like "*$target*" })
 }
 if ($started) {
-    Write-Host "Installed to $dir and running. It will start automatically when you sign in." -ForegroundColor Green
+    Write-Host "HP Quick Modes $newVersion is installed and running. It will start automatically when you sign in." -ForegroundColor Green
     Write-Host 'If you don''t see the icon, check the ^ overflow area of the taskbar.'
 } else {
     Write-Host "Installed to $dir, but it doesn't seem to have started." -ForegroundColor Yellow
