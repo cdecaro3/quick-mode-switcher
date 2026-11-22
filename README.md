@@ -8,15 +8,15 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 
 ## Modes
 
-Each mode is a setting in the laptop's BIOS that controls fan speed and power limits together. They're the same modes My HP offers.
+Each mode is a setting in the laptop's BIOS that controls fan speed and CPU performance together. They're the same modes My HP offers, and the descriptions below follow My HP's.
 
-| Icon | Mode | Good for |
+| Icon | Mode | What it does |
 |---|---|---|
-| **P** (orange) | Performance | Heavy work and games: the most speed, with louder fans |
-| **B** (blue) | Balanced | Everyday use |
-| **C** (teal) | Cool | Keeping the laptop cooler to the touch, at some cost to speed |
-| **Q** (green) | Quiet | Keeping the fans quiet, at some cost to speed |
-| **S** (gray) | Power Saver | The longest battery life |
+| **P** (orange) | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
+| **B** (blue) | Balanced | Balances fan speed, performance and temperature. |
+| **C** (teal) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
+| **Q** (green) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
+| **S** (gray) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; HP Quick Modes doesn't. |
 
 ## Using it
 
@@ -150,7 +150,7 @@ Safety checks:
 
 ## Limitations
 
-- It sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or dimming the screen in Power Saver, isn't replicated.
+- It sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or Power Saver's OLED screen power saving, isn't replicated.
 - Memory use is that of a PowerShell process, roughly 50–100 MB.
 
 ## Credits
