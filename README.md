@@ -10,7 +10,7 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 
 - Tray icon showing the current mode as a colored letter (P, B, C, Q, S)
 - Left- or right-click for a menu of all five modes, with the current one checked
-- Keeps the same mode when you plug in or unplug. The laptop switches modes on its own then; HP Quick Modes switches back to your pick within a few seconds. Turn off "Same mode plugged in and on battery" to let it keep separate modes instead.
+- Keeps your mode when you plug in or unplug. If My HP is installed, its background process switches back to My HP's last pick then; HP Quick Modes switches back to yours within a few seconds. Turn this off with "Same mode plugged in and on battery".
 - Starts at login without an admin prompt
 - Optionally re-applies your last mode at login
 - Refuses to switch if the BIOS reply looks unfamiliar, and warns if a switch doesn't take
@@ -77,6 +77,7 @@ The modes are a single BIOS setting exposed through HP's WMI interface (`root\wm
 ## Limitations
 
 - Sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or dimming the screen in Power Saver, isn't replicated.
+- My HP's background process, `HP.SystemControl.Background.exe` (part of the myHP app), re-applies My HP's last pick whenever the charger is plugged in or unplugged. HP Quick Modes switches back, but you'll see My HP's pick for a few seconds. Uninstalling My HP stops this.
 - Memory use is that of a PowerShell process, roughly 50–100 MB.
 
 ## Credits

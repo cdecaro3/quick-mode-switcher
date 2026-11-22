@@ -144,8 +144,8 @@ function Set-Mode([int]$mode) {
     }
 }
 
-# The laptop switches modes by itself when the charger is plugged in or unplugged.
-# After a power change, switch back to the mode last picked (if that option is on).
+# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick when the
+# charger is plugged in or unplugged. After a power change, switch back to the mode last picked here.
 function Restore-ChosenMode {
     Update-State
     $want = $script:settings.lastMode
@@ -190,7 +190,7 @@ $script:tray.add_MouseUp({
 })
 
 # Watch for the charger being plugged in or unplugged (a cheap check, no BIOS call).
-# The laptop switches modes on its own then, so check a few seconds later and again after a while.
+# My HP may switch the mode then, so check a few seconds later and again after a while.
 $script:lastPower   = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
 $script:powerChange = $null
 $script:checksDone  = 0
