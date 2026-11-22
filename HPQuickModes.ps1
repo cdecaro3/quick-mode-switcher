@@ -23,12 +23,13 @@ $colors    = @('#E8590C', '#1C7ED6', '#1098AD', '#37B24D', '#868E96')
 $settingsPath = Join-Path $PSScriptRoot 'settings.json'
 
 function Get-Settings {
-    $s = @{ lastMode = -1; restoreAtLogin = $true }
+    $s = @{ lastMode = -1; restoreAtLogin = $true; keepAcrossPower = $true }
     try {
         if (Test-Path $settingsPath) {
             $j = Get-Content $settingsPath -Raw | ConvertFrom-Json
             if ($j.lastMode -ge 0 -and $j.lastMode -le 4) { $s.lastMode = [int]$j.lastMode }
             if ($null -ne $j.restoreAtLogin) { $s.restoreAtLogin = [bool]$j.restoreAtLogin }
+            if ($null -ne $j.keepAcrossPower) { $s.keepAcrossPower = [bool]$j.keepAcrossPower }
         }
     } catch {}
     return $s
@@ -143,6 +144,16 @@ function Set-Mode([int]$mode) {
     }
 }
 
+# The laptop switches modes by itself when the charger is plugged in or unplugged.
+# After a power change, switch back to the mode last picked (if that option is on).
+function Restore-ChosenMode {
+    Update-State
+    $want = $script:settings.lastMode
+    if ($script:settings.keepAcrossPower -and $want -ge 0 -and $script:current -ge 0 -and $script:current -ne $want) {
+        Set-Mode $want
+    }
+}
+
 for ($i = 0; $i -lt 5; $i++) {
     $it = New-Object System.Windows.Forms.ToolStripMenuItem($modeNames[$i])
     $it.Tag = $i
@@ -151,6 +162,12 @@ for ($i = 0; $i -lt 5; $i++) {
     $script:items += $it
 }
 [void]$script:menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
+
+$script:keepItem = New-Object System.Windows.Forms.ToolStripMenuItem('Same mode plugged in and on battery')
+$script:keepItem.CheckOnClick = $true
+$script:keepItem.Checked = $script:settings.keepAcrossPower
+$script:keepItem.add_Click({ $script:settings.keepAcrossPower = $script:keepItem.Checked; Save-Settings })
+[void]$script:menu.Items.Add($script:keepItem)
 
 $script:restoreItem = New-Object System.Windows.Forms.ToolStripMenuItem('Re-apply last mode at login')
 $script:restoreItem.CheckOnClick = $true
@@ -172,10 +189,41 @@ $script:tray.add_MouseUp({
     if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) { $script:showMenu.Invoke($script:tray, $null) }
 })
 
-# Refresh the icon every 30 seconds in case something else changes the mode
+# Watch for the charger being plugged in or unplugged (a cheap check, no BIOS call).
+# The laptop switches modes on its own then, so check a few seconds later and again after a while.
+$script:lastPower   = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
+$script:powerChange = $null
+$script:checksDone  = 0
+$checkDelays = @(4, 15)   # seconds after a power change
+
+$script:powerTimer = New-Object System.Windows.Forms.Timer
+$script:powerTimer.Interval = 2000
+$script:powerTimer.add_Tick({
+    $p = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
+    if ($p -ne $script:lastPower) {
+        $script:lastPower   = $p
+        $script:powerChange = Get-Date
+        $script:checksDone  = 0
+    }
+    if ($script:powerChange -and $script:checksDone -lt $checkDelays.Count -and
+        ((Get-Date) - $script:powerChange).TotalSeconds -ge $checkDelays[$script:checksDone]) {
+        $script:checksDone++
+        Restore-ChosenMode
+    }
+})
+
+# Refresh the icon every 30 seconds. If the mode changed away from a power change
+# (for example in My HP), treat it as the new chosen mode.
 $script:timer = New-Object System.Windows.Forms.Timer
 $script:timer.Interval = 30000
-$script:timer.add_Tick({ Update-State })
+$script:timer.add_Tick({
+    Update-State
+    $recent = $script:powerChange -and ((Get-Date) - $script:powerChange).TotalSeconds -lt 30
+    if (-not $recent -and $script:current -ge 0 -and $script:current -ne $script:settings.lastMode) {
+        $script:settings.lastMode = $script:current
+        Save-Settings
+    }
+})
 
 # ---------- Start ----------
 # Right after login the BIOS interface can take a moment, so retry the first read briefly
@@ -191,8 +239,10 @@ if ($script:current -ge 0 -and $script:settings.restoreAtLogin -and
 }
 
 $script:timer.Start()
+$script:powerTimer.Start()
 [System.Windows.Forms.Application]::Run()
 
+$script:powerTimer.Stop()
 $script:timer.Stop()
 $script:tray.Dispose()
 $script:mutex.ReleaseMutex()

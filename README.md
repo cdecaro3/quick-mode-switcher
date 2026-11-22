@@ -10,6 +10,7 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 
 - Tray icon showing the current mode as a colored letter (P, B, C, Q, S)
 - Left- or right-click for a menu of all five modes, with the current one checked
+- Keeps the same mode when you plug in or unplug. The laptop switches modes on its own then; HP Quick Modes switches back to your pick within a few seconds. Turn off "Same mode plugged in and on battery" to let it keep separate modes instead.
 - Starts at login without an admin prompt
 - Optionally re-applies your last mode at login
 - Refuses to switch if the BIOS reply looks unfamiliar, and warns if a switch doesn't take
