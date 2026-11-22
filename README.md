@@ -162,4 +162,4 @@ Not affiliated with or endorsed by HP. Use at your own risk.
 
 ## License
 
-[MIT](LICENSE)
+Copyright (C) 2026 cdecaro3. Licensed under the [GNU General Public License v3.0](LICENSE): you can use, change and share this, but anything you share that's based on it must stay open source under the same license.
