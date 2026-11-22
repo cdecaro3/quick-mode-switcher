@@ -24,7 +24,7 @@ Left- or right-click the tray icon to open the menu:
 
 - **The five modes.** The checkmark shows the current one. The mode you pick here is *your mode*, and HP Quick Modes keeps the laptop on it.
 - **Re-apply my mode at sign-in.** On by default: after a restart, HP Quick Modes switches back to your mode a few seconds after you sign in. Turn it off to keep whatever mode the laptop starts in.
-- **Exit.** Closes HP Quick Modes until you next sign in.
+- **Exit.** Closes HP Quick Modes. If it's installed, it starts again the next time you sign in.
 
 What to expect:
 
@@ -33,15 +33,26 @@ What to expect:
 | Pick a mode in the menu | The laptop switches right away and the icon changes. |
 | Plug in or unplug the charger | Nothing, unless My HP is installed. Then you'll see My HP's mode for about 7 seconds before HP Quick Modes switches back. [Why?](#if-you-keep-my-hp) |
 | Wake the laptop from sleep | It stays on your mode. If anything changes it, HP Quick Modes switches back within about 7 seconds. |
-| Restart and sign in | The laptop starts up in My HP's mode if My HP is installed (otherwise, in whatever mode it comes up in). A few seconds after you sign in, HP Quick Modes switches to your mode. If "Re-apply my mode at sign-in" is off, it stays in the starting mode, which becomes your mode. |
+| Restart and sign in | The laptop starts up in its startup mode, which is My HP's setting if My HP is installed. A few seconds after you sign in, HP Quick Modes switches to your mode. If "Re-apply my mode at sign-in" is off, the startup mode becomes your mode instead. |
 | Pick a mode in My HP | It works, but only until the next plug-in, unplug, wake or restart. Then HP Quick Modes switches back to your mode. |
 
 If a switch doesn't take, HP Quick Modes shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into a red **!**.
 
 ## Requirements
 
+- The laptop above, or another HP laptop that passes the checks in [Other HP laptops](#other-hp-laptops)
 - Windows 11 with Windows PowerShell 5.1, which is built in (Windows 10 is untested)
 - A Windows administrator account: changing the mode needs admin rights, so the app runs with them
+
+## Other HP laptops
+
+Check yours before installing, by running these from the downloaded folder in this order (they're described under [Tools](#tools)):
+
+1. `Test-Compatibility.ps1` says whether the BIOS supports the mode command.
+2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value HP Quick Modes expects.
+3. `Test-ModeSwitch.ps1` changes the mode once and switches back, asking before each step.
+
+HP Quick Modes won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
 
 ## Install
 
@@ -68,7 +79,7 @@ The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar t
 
 After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\HPQuickModes`. Keep the folder only if you want the scripts in `tools/`.
 
-**To try it without installing,** run this from the same folder instead. It runs until you choose Exit, and doesn't start again on its own.
+**To try it without installing,** run this in the same Administrator terminal and folder instead. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
 powershell -ExecutionPolicy Bypass -File .\HPQuickModes.ps1
@@ -90,16 +101,6 @@ To remove My HP instead:
 2. Search Start for **Change device installation settings** and choose **No**. HP delivers My HP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
 
 If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again. To watch it happen, run `Watch-PlugUnplug.ps1` (see [Tools](#tools)).
-
-## Other HP laptops
-
-Check yours before installing, in this order (the scripts are described under [Tools](#tools)):
-
-1. `Test-Compatibility.ps1` says whether the BIOS supports the mode command.
-2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value HP Quick Modes expects.
-3. `Test-ModeSwitch.ps1` changes the mode once and switches back, asking before each step.
-
-HP Quick Modes won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
 
 ## Troubleshooting
 
