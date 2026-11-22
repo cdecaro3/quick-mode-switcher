@@ -74,7 +74,7 @@ If you'd rather use the command line, run `powershell -ExecutionPolicy Bypass -F
 
 After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\QuickModeSwitcher`. Keep the folder only if you want the scripts in `tools/`.
 
-**To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, changing the path to the folder that has Install.cmd in it. (Windows' Extract All often adds an extra level, like `quick-mode-switcher-main\quick-mode-switcher-main`.) It runs until you choose Exit, and doesn't start again on its own.
+**To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, adjusting the folder path to where you extracted it. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
 cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
@@ -109,7 +109,7 @@ If My HP comes back anyway, this app keeps working; you'll just see the brief sw
 
 ## Tools
 
-Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the folder that has Install.cmd in it, and run the script, for example:
+Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the downloaded folder and run the script, for example:
 
 ```
 cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
