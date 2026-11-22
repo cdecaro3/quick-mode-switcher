@@ -12,11 +12,11 @@ Each mode is a setting in the laptop's BIOS that controls fan speed and CPU perf
 
 | Icon | Mode | What it does |
 |---|---|---|
-| **P** (red) | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
-| **B** (gray) | Balanced | Balances fan speed, performance and temperature. |
-| **C** (blue) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
-| **Q** (violet) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
-| **S** (green) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
+| <img src="docs/icons/performance.png" width="32" alt="P"> red | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
+| <img src="docs/icons/balanced.png" width="32" alt="B"> gray | Balanced | Balances fan speed, performance and temperature. |
+| <img src="docs/icons/cool.png" width="32" alt="C"> blue | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
+| <img src="docs/icons/quiet.png" width="32" alt="Q"> violet | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
+| <img src="docs/icons/power-saver.png" width="32" alt="S"> green | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
 
 ## Using it
 
@@ -38,7 +38,7 @@ What to expect:
 | Restart and sign in | The laptop starts up in its startup mode, which is My HP's setting if My HP is installed. A few seconds after you sign in, the app switches to your mode. If "Re-apply my mode at sign-in" is off, the startup mode becomes your mode instead. |
 | Pick a mode in My HP | It works, but only until the next plug-in, unplug, wake or restart. Then the app switches back to your mode. |
 
-If a switch doesn't take, the app shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into an amber **!**.
+If a switch doesn't take, the app shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into an amber <img src="docs/icons/warning.png" width="20" alt="!" align="absmiddle">.
 
 ## Requirements
 
