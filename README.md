@@ -1,24 +1,47 @@
 # HP Quick Modes
 
-A lightweight system-tray switcher for HP laptop modes: Performance, Balanced, Cool, Quiet and Power Saver. Click the tray icon, pick a mode, done. It does this one job of the My HP app without My HP's background processes.
+A small system-tray app for switching an HP laptop's modes (Performance, Balanced, Cool, Quiet and Power Saver) without opening My HP. Click the tray icon, pick a mode, done.
 
-Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. It may work on other HP laptops that use the same BIOS interface; see [Other HP laptops](#other-hp-laptops).
+Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. Other HP laptops may work; see [Other HP laptops](#other-hp-laptops).
 
 > **Status:** early. The BIOS commands are verified on the laptop above; the tray app is still being tested.
 
-## Features
+## Modes
 
-- Tray icon showing the current mode as a colored letter (P, B, C, Q, S)
-- Left- or right-click for a menu of all five modes, with the current one checked
-- Keeps your mode when you plug in or unplug, wake from sleep or sign in, even if My HP is still installed (see [My HP](#my-hp))
-- Starts at sign-in without an admin prompt
-- Optionally re-applies your last mode at sign-in
-- Refuses to switch if the BIOS reply looks unfamiliar, and warns if a switch doesn't take
+Each mode is a setting in the laptop's BIOS that controls fan speed and power limits together. They're the same modes My HP offers.
+
+| Icon | Mode | Good for |
+|---|---|---|
+| **P** (orange) | Performance | Heavy work and games: the most speed, with louder fans |
+| **B** (blue) | Balanced | Everyday use |
+| **C** (teal) | Cool | Keeping the laptop cooler to the touch, at some cost to speed |
+| **Q** (green) | Quiet | Keeping the fans quiet, at some cost to speed |
+| **S** (gray) | Power Saver | The longest battery life |
+
+## Using it
+
+Left- or right-click the tray icon to open the menu:
+
+- **The five modes.** The checkmark shows the current one. The mode you pick here is *your mode*, and HP Quick Modes keeps the laptop on it.
+- **Re-apply my mode at sign-in.** On by default: after a restart, HP Quick Modes switches back to your mode a few seconds after you sign in. Turn it off to keep whatever mode the laptop starts in.
+- **Exit.** Closes HP Quick Modes until you next sign in.
+
+What to expect:
+
+| When you... | What happens |
+|---|---|
+| Pick a mode in the menu | The laptop switches right away and the icon changes. |
+| Plug in or unplug the charger | Nothing, unless My HP is installed. Then you'll see My HP's mode for about 7 seconds before HP Quick Modes switches back. [Why?](#if-you-keep-my-hp) |
+| Wake the laptop from sleep | It stays on your mode. If anything changes it, HP Quick Modes switches back within about 7 seconds. |
+| Restart and sign in | The laptop starts up in My HP's mode if My HP is installed (otherwise, in whatever mode it comes up in). A few seconds after you sign in, HP Quick Modes switches to your mode. If "Re-apply my mode at sign-in" is off, it stays in the starting mode, which becomes your mode. |
+| Pick a mode in My HP | It works, but only until the next plug-in, unplug, wake or restart. Then HP Quick Modes switches back to your mode. |
+
+If a switch doesn't take, HP Quick Modes shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into a red **!**.
 
 ## Requirements
 
 - Windows 11 with Windows PowerShell 5.1, which is built in (Windows 10 is untested)
-- A Windows administrator account: the BIOS command needs admin rights, so the app runs with them
+- A Windows administrator account: changing the mode needs admin rights, so the app runs with them
 
 ## Install
 
@@ -33,59 +56,56 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
    powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
    ```
 
-The installer checks that your laptop answers the mode command, copies the app to `C:\Program Files\HPQuickModes`, creates a scheduled task, "HP Quick Modes", that starts it at sign-in with admin rights, and adds HP Quick Modes to Windows' Installed apps. The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
+The installer:
 
-To try it without installing, run this from the same folder instead. It runs until you choose Exit from its menu.
+- checks that your laptop answers the mode command, and asks before going on if it doesn't
+- copies the app to `C:\Program Files\HPQuickModes`
+- creates a scheduled task, "HP Quick Modes", that starts it with admin rights whenever you sign in, without an admin prompt
+- adds HP Quick Modes to Windows' Installed apps, so you can uninstall it from Settings
+- starts it
+
+The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
+
+**To try it without installing,** run this from the same folder instead. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
 powershell -ExecutionPolicy Bypass -File .\HPQuickModes.ps1
 ```
 
-To update, download the new version and run the installer again. Your settings are kept.
+**To update,** download the new version and run the installer again. Your settings are kept.
 
-To uninstall, go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one removes the app, its scheduled task and its settings; the laptop stays in whatever mode it's in.
+**To uninstall,** go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one removes the app, its scheduled task and its settings. The laptop stays in whatever mode it's in.
+
+## If you keep My HP
+
+My HP doesn't have to go, but it does interfere a little. Its background process, `HP.SystemControl.Background.exe`, puts back My HP's own setting every time you plug in or unplug, several times over about 5 seconds. HP Quick Modes waits for it to finish, then switches back to your mode once; switching back sooner just starts a back-and-forth.
+
+**Set My HP to the mode you want the laptop to start in.** The laptop starts up in My HP's setting, and that's the mode you'll see for a few seconds after plugging in or unplugging. Balanced is a sensible choice. Picking modes in HP Quick Modes doesn't change My HP's setting.
+
+To remove My HP instead:
+
+1. Settings → Apps → Installed apps → **myHP** → Uninstall.
+2. Search Start for **Change device installation settings** and choose **No**. HP delivers My HP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
+
+If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again. To watch it happen, run `Watch-PlugUnplug.ps1` (see [Tools](#tools)).
 
 ## Other HP laptops
 
 Check yours before installing, in this order (the scripts are described under [Tools](#tools)):
 
 1. `Test-Compatibility.ps1` says whether the BIOS supports the mode command.
-2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value in the [table below](#how-it-works).
+2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value HP Quick Modes expects.
 3. `Test-ModeSwitch.ps1` changes the mode once and switches back, asking before each step.
 
 HP Quick Modes won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
 
-## How it works
+## Troubleshooting
 
-The modes are a single BIOS setting exposed through HP's WMI interface (`root\wmi`, class `hpqBIntM`), command type `0x4C`. It's the same setting My HP changes, and the same command the Linux kernel's `hp-wmi` driver uses.
-
-| Value | Mode |
-|---|---|
-| `00` | Performance |
-| `01` | Balanced |
-| `02` | Cool |
-| `03` | Quiet |
-| `04` | Power Saver |
-
-- **Read:** `Command = 1`, method `hpqBIOSInt128`. The first byte of the reply is the mode; the second is a status flag that changes on its own and is ignored.
-- **Write:** `Command = 2`, method `hpqBIOSInt0`, data `[mode] 00 00 00`.
-
-## My HP
-
-You don't need to uninstall My HP, but there's one interaction to know about. Its background process, `HP.SystemControl.Background.exe`, re-applies My HP's last pick when the charger is plugged in or unplugged, several times over the first 5 seconds or so. HP Quick Modes waits for it to finish and then switches back to your mode, so you'll see My HP's pick for about 7 seconds.
-
-**If you keep My HP, set it to the mode you want the laptop to start in.** Balanced is a sensible choice. The laptop starts in My HP's setting after a restart, and you'll see it for those few seconds after plugging in or unplugging. With "Re-apply last mode at login" on, HP Quick Modes then switches to your last pick; with it off, it keeps My HP's mode until you pick one in its menu.
-
-Picking a mode in HP Quick Modes doesn't change My HP's setting. Picking one in My HP works, but only until the next plug/unplug, wake from sleep or restart; after that, HP Quick Modes switches back to the mode picked in its menu.
-
-To remove My HP:
-
-1. Settings → Apps → Installed apps → **myHP** → Uninstall.
-2. Search Start for **Change device installation settings** and choose **No**. HP delivers My HP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
-
-If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again.
-
-To see this for yourself, use `Watch-PlugUnplug.ps1`. If the mode changes on plug/unplug on another model, `Find-ModeChanger.ps1` finds which HP program is doing it.
+- **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `HPQuickModes.ps1` directly from an Administrator PowerShell to see any error, or look at the "HP Quick Modes" task in Task Scheduler.
+- **Nothing happens when I run `HPQuickModes.ps1`.** It's already running, probably the installed copy; look for its icon.
+- **The icon is a red `!`.** The laptop's reply wasn't what HP Quick Modes expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
+- **The mode changes on its own.** That's My HP (see [If you keep My HP](#if-you-keep-my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
+- **Settings** are in `settings.json` next to the app, which is `C:\Program Files\HPQuickModes` when installed.
 
 ## Tools
 
@@ -100,29 +120,36 @@ Each copies its results to the clipboard when it finishes.
 | Script | What it does | Changes anything? |
 |---|---|---|
 | `Test-Compatibility.ps1` | Shows the model and BIOS, whether the BIOS answers the mode command, and the HP software running with its memory use. | No |
-| `Get-ModeValues.ps1` | You pick each mode in My HP and type its name; it checks the BIOS value against the table above. Needs My HP. | No |
+| `Get-ModeValues.ps1` | You pick each mode in My HP and type its name; it checks the BIOS value against the [table below](#how-it-works-technical). Needs My HP. | No |
 | `Test-ModeSwitch.ps1` | Re-sends the current mode, switches to another, then switches back. Asks before each step. | Yes, and switches back |
 | `Watch-PlugUnplug.ps1` | Logs mode changes as you plug in and unplug, and how long HP Quick Modes takes to switch back. | No |
 | `Find-ModeChanger.ps1` | Stops one HP app's programs at a time and watches plug/unplug, to find which one changes the mode. Asks before each app. | Stops programs until the next restart |
 
-## Troubleshooting
+## How it works (technical)
 
-- **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `HPQuickModes.ps1` directly from an Administrator PowerShell to see any error, or look at the "HP Quick Modes" task in Task Scheduler.
-- **Nothing happens when I run `HPQuickModes.ps1`.** It's already running, probably the installed copy; look for its icon.
-- **The icon is a red `!`.** The BIOS reply wasn't what HP Quick Modes expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
-- **The mode changes on its own.** That's My HP (see [My HP](#my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
-- **Settings** are in `settings.json` next to the app, which is `C:\Program Files\HPQuickModes` when installed.
+The modes are a single BIOS setting exposed through HP's WMI interface (`root\wmi`, class `hpqBIntM`), command type `0x4C`. It's the same setting My HP changes, and the same command the Linux kernel's `hp-wmi` driver uses.
 
-## Safety
+| Value | Mode |
+|---|---|
+| `00` | Performance |
+| `01` | Balanced |
+| `02` | Cool |
+| `03` | Quiet |
+| `04` | Power Saver |
 
-- Sends only the read and write commands above, and only values `00`–`04`.
-- Checks every reply (return code 0, signature `PASS`, mode `00`–`04`). If one looks wrong, for example after a BIOS update, switching turns off and the icon shows a red `!`.
-- Reads the mode back after each switch and warns if it didn't take.
+- **Read:** `Command = 1`, method `hpqBIOSInt128`. The first byte of the reply is the mode; the second is a status flag that changes on its own and is ignored.
+- **Write:** `Command = 2`, method `hpqBIOSInt0`, data `[mode] 00 00 00`.
+
+Safety checks:
+
+- It sends only those two commands, and only values `00`–`04`.
+- It checks every reply (return code 0, signature `PASS`, mode `00`–`04`). If one looks wrong, switching turns off.
+- It reads the mode back after each switch and warns if it didn't take.
 - The installed copy lives in Program Files, so only admins can change the script that runs with admin rights.
 
 ## Limitations
 
-- Sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or dimming the screen in Power Saver, isn't replicated.
+- It sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or dimming the screen in Power Saver, isn't replicated.
 - Memory use is that of a PowerShell process, roughly 50–100 MB.
 
 ## Credits

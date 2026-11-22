@@ -213,7 +213,7 @@ for ($i = 0; $i -lt 5; $i++) {
 }
 [void]$script:menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
 
-$script:restoreItem = New-Object System.Windows.Forms.ToolStripMenuItem('Re-apply last mode at login')
+$script:restoreItem = New-Object System.Windows.Forms.ToolStripMenuItem('Re-apply my mode at sign-in')
 $script:restoreItem.CheckOnClick = $true
 $script:restoreItem.Checked = $script:settings.restoreAtLogin
 $script:restoreItem.add_Click({ $script:settings.restoreAtLogin = $script:restoreItem.Checked; Save-Settings })
