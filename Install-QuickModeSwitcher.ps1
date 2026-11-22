@@ -1,19 +1,19 @@
-# Install-LaptopQuickModeSwitcher.ps1
-# Installs LaptopQuickModeSwitcher.ps1 so it starts at sign-in with admin rights and no prompt, and adds an
+# Install-QuickModeSwitcher.ps1
+# Installs QuickModeSwitcher.ps1 so it starts at sign-in with admin rights and no prompt, and adds an
 # entry to Windows' Installed apps so it can be uninstalled from Settings.
-# Easiest: double-click Install.cmd. Or, from the folder with LaptopQuickModeSwitcher.ps1 and Uninstall-LaptopQuickModeSwitcher.ps1:
-#   powershell -ExecutionPolicy Bypass -File .\Install-LaptopQuickModeSwitcher.ps1
+# Easiest: double-click Install.cmd. Or, from the folder with QuickModeSwitcher.ps1 and Uninstall-QuickModeSwitcher.ps1:
+#   powershell -ExecutionPolicy Bypass -File .\Install-QuickModeSwitcher.ps1
 # It asks for admin rights if it doesn't have them. -Pause keeps the window open at the end.
 # To remove everything it set up, uninstall from Settings > Apps > Installed apps, or run
-# Uninstall-LaptopQuickModeSwitcher.ps1 (-Uninstall here does the same).
+# Uninstall-QuickModeSwitcher.ps1 (-Uninstall here does the same).
 
 param([switch]$Uninstall, [switch]$Pause)
 
-$taskName = 'Laptop Quick Mode Switcher'
+$taskName = 'Quick Mode Switcher'
 # Program Files is admin-only, so nothing without admin rights can change the script that runs as admin
-$dir     = Join-Path $env:ProgramFiles 'LaptopQuickModeSwitcher'
-$target  = Join-Path $dir 'LaptopQuickModeSwitcher.ps1'
-$appsKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\LaptopQuickModeSwitcher'
+$dir     = Join-Path $env:ProgramFiles 'QuickModeSwitcher'
+$target  = Join-Path $dir 'QuickModeSwitcher.ps1'
+$appsKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\QuickModeSwitcher'
 
 function Exit-Installer([int]$code) {
     if ($Pause) { Read-Host "`nPress Enter to close" | Out-Null }
@@ -28,7 +28,7 @@ if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal
     try {
         Start-Process powershell.exe -Verb RunAs -ArgumentList $relaunchArgs
     } catch {
-        Write-Host 'Installing Laptop Quick Mode Switcher needs administrator rights.' -ForegroundColor Red
+        Write-Host 'Installing Quick Mode Switcher needs administrator rights.' -ForegroundColor Red
         Exit-Installer 1
     }
     exit
@@ -37,24 +37,24 @@ if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal
 function Stop-Tray {
     Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*LaptopQuickModeSwitcher.ps1*' -and
-                       $_.CommandLine -notlike '*Install-LaptopQuickModeSwitcher*' } |
+        Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*QuickModeSwitcher.ps1*' -and
+                       $_.CommandLine -notlike '*Install-QuickModeSwitcher*' } |
         ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 }
 
 if ($Uninstall) {
-    & (Join-Path $PSScriptRoot 'Uninstall-LaptopQuickModeSwitcher.ps1')
+    & (Join-Path $PSScriptRoot 'Uninstall-QuickModeSwitcher.ps1')
     exit
 }
 
-$src       = Join-Path $PSScriptRoot 'LaptopQuickModeSwitcher.ps1'
-$uninstSrc = Join-Path $PSScriptRoot 'Uninstall-LaptopQuickModeSwitcher.ps1'
+$src       = Join-Path $PSScriptRoot 'QuickModeSwitcher.ps1'
+$uninstSrc = Join-Path $PSScriptRoot 'Uninstall-QuickModeSwitcher.ps1'
 if (-not (Test-Path $src) -or -not (Test-Path $uninstSrc)) {
-    Write-Host "LaptopQuickModeSwitcher.ps1 and Uninstall-LaptopQuickModeSwitcher.ps1 need to be in the same folder as this installer ($PSScriptRoot)." -ForegroundColor Red
+    Write-Host "QuickModeSwitcher.ps1 and Uninstall-QuickModeSwitcher.ps1 need to be in the same folder as this installer ($PSScriptRoot)." -ForegroundColor Red
     Exit-Installer 1
 }
 
-# Does this laptop answer the mode command the way Laptop Quick Mode Switcher expects? (read-only)
+# Does this laptop answer the mode command the way Quick Mode Switcher expects? (read-only)
 function Test-Bios {
     try {
         $inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction Stop | Select-Object -First 1
@@ -71,21 +71,21 @@ function Test-Bios {
     }
 }
 if (-not (Test-Bios)) {
-    Write-Host "This laptop doesn't seem to support Laptop Quick Mode Switcher. tools\Test-Compatibility.ps1 shows details." -ForegroundColor Yellow
+    Write-Host "This laptop doesn't seem to support Quick Mode Switcher. tools\Test-Compatibility.ps1 shows details." -ForegroundColor Yellow
     if ((Read-Host 'Install anyway? (y/n)') -ne 'y') { Exit-Installer 1 }
 }
 
 # Versions, to show what's being replaced
 $newVersion = if ((Get-Content $src -Raw) -match "\`$AppVersion\s*=\s*'([^']+)'") { $matches[1] } else { 'unknown' }
 $oldVersion = (Get-ItemProperty -Path $appsKey -ErrorAction SilentlyContinue).DisplayVersion
-if ($oldVersion) { Write-Host "Updating Laptop Quick Mode Switcher $oldVersion to $newVersion." }
-else             { Write-Host "Installing Laptop Quick Mode Switcher $newVersion." }
+if ($oldVersion) { Write-Host "Updating Quick Mode Switcher $oldVersion to $newVersion." }
+else             { Write-Host "Installing Quick Mode Switcher $newVersion." }
 
 # The task starts the app for whoever is signed in, which may not be the account running this installer
 $user = (Get-CimInstance Win32_ComputerSystem).UserName
 if (-not $user) { $user = $id.Name }
 if ($user -ne $id.Name) {
-    Write-Host "Note: you're running this as $($id.Name), but $user is signed in. Laptop Quick Mode Switcher will start when $user signs in, and that account needs to be an administrator for it to work." -ForegroundColor Yellow
+    Write-Host "Note: you're running this as $($id.Name), but $user is signed in. Quick Mode Switcher will start when $user signs in, and that account needs to be an administrator for it to work." -ForegroundColor Yellow
 }
 
 try {
@@ -101,17 +101,17 @@ try {
 
     # Entry in Settings > Apps > Installed apps, so it can be uninstalled like any other app
     New-Item -Path $appsKey -Force | Out-Null
-    Set-ItemProperty -Path $appsKey -Name DisplayName     -Value 'Laptop Quick Mode Switcher'
+    Set-ItemProperty -Path $appsKey -Name DisplayName     -Value 'Quick Mode Switcher'
     Set-ItemProperty -Path $appsKey -Name DisplayVersion  -Value $newVersion
     Set-ItemProperty -Path $appsKey -Name Publisher       -Value 'Community project (not made by or affiliated with HP)'
     Set-ItemProperty -Path $appsKey -Name InstallLocation -Value $dir
-    Set-ItemProperty -Path $appsKey -Name UninstallString -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $dir 'Uninstall-LaptopQuickModeSwitcher.ps1')`""
+    Set-ItemProperty -Path $appsKey -Name UninstallString -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $dir 'Uninstall-QuickModeSwitcher.ps1')`""
     Set-ItemProperty -Path $appsKey -Name NoModify        -Value 1 -Type DWord
     Set-ItemProperty -Path $appsKey -Name NoRepair        -Value 1 -Type DWord
 
-    # Remove any other task that runs Laptop Quick Mode Switcher (for example, from a version with a different task name)
+    # Remove any other task that runs Quick Mode Switcher (for example, from a version with a different task name)
     Get-ScheduledTask -ErrorAction SilentlyContinue |
-        Where-Object { $_.TaskName -ne $taskName -and (@($_.Actions | ForEach-Object { $_.Arguments }) -like '*LaptopQuickModeSwitcher.ps1*') } |
+        Where-Object { $_.TaskName -ne $taskName -and (@($_.Actions | ForEach-Object { $_.Arguments }) -like '*QuickModeSwitcher.ps1*') } |
         ForEach-Object { Unregister-ScheduledTask -InputObject $_ -Confirm:$false }
 
     # conhost --headless runs PowerShell with no console window at all
@@ -128,7 +128,7 @@ try {
     Start-ScheduledTask -TaskName $taskName
 } catch {
     Write-Host "Install failed: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host 'Run the installer again. To remove what was set up so far, run Uninstall-LaptopQuickModeSwitcher.ps1.'
+    Write-Host 'Run the installer again. To remove what was set up so far, run Uninstall-QuickModeSwitcher.ps1.'
     Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue   # restart the previous version if there is one
     Exit-Installer 1
 }
@@ -142,11 +142,11 @@ for ($i = 0; $i -lt 10 -and -not $started; $i++) {
         Where-Object { $_.CommandLine -like "*$target*" })
 }
 if ($started) {
-    Write-Host "Laptop Quick Mode Switcher $newVersion is installed and running. It will start automatically when you sign in." -ForegroundColor Green
+    Write-Host "Quick Mode Switcher $newVersion is installed and running. It will start automatically when you sign in." -ForegroundColor Green
     Write-Host 'If you don''t see the icon, check the ^ overflow area of the taskbar.'
 } else {
     Write-Host "Installed to $dir, but it doesn't seem to have started." -ForegroundColor Yellow
-    Write-Host 'Run LaptopQuickModeSwitcher.ps1 directly from this folder to see any error, or check the "Laptop Quick Mode Switcher" task in Task Scheduler.'
+    Write-Host 'Run QuickModeSwitcher.ps1 directly from this folder to see any error, or check the "Quick Mode Switcher" task in Task Scheduler.'
 }
 
 Exit-Installer 0

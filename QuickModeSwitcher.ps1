@@ -1,40 +1,40 @@
-# LaptopQuickModeSwitcher.ps1
+# QuickModeSwitcher.ps1
 # System-tray menu for switching the HP Spectre x360 14-eu000's modes (fans, power limits).
 # Sends only two BIOS commands: read the mode, and set a mode (00-04), the same ones tested with
-# tools\Test-ModeSwitch.ps1. Needs admin rights; Install-LaptopQuickModeSwitcher.ps1 makes it start at login
+# tools\Test-ModeSwitch.ps1. Needs admin rights; Install-QuickModeSwitcher.ps1 makes it start at login
 # without a prompt.
 
 $AppVersion = '0.1.0'   # shown in Windows' Installed apps; bump it with each release
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-Add-Type -Namespace LaptopQuickModeSwitcher -Name Native -MemberDefinition @'
+Add-Type -Namespace QuickModeSwitcher -Name Native -MemberDefinition @'
 [DllImport("user32.dll")] public static extern bool DestroyIcon(System.IntPtr hIcon);
 [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
 '@
 # Draw at the screen's real scale, so the icon and menu are sharp instead of stretched
-[void][LaptopQuickModeSwitcher.Native]::SetProcessDPIAware()
+[void][QuickModeSwitcher.Native]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 # If something unexpected fails inside the menu or a timer, keep running instead of showing a crash dialog
 [System.Windows.Forms.Application]::SetUnhandledExceptionMode([System.Windows.Forms.UnhandledExceptionMode]::CatchException)
 [System.Windows.Forms.Application]::add_ThreadException({ param($s, $e) })
 
 function Show-Error([string]$text) {
-    [void][System.Windows.Forms.MessageBox]::Show($text, 'Laptop Quick Mode Switcher', 'OK', 'Error')
+    [void][System.Windows.Forms.MessageBox]::Show($text, 'Quick Mode Switcher', 'OK', 'Error')
 }
 
 # The BIOS command needs admin rights
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Show-Error 'Laptop Quick Mode Switcher needs administrator rights. Run it from an Administrator PowerShell, or install it with Install-LaptopQuickModeSwitcher.ps1.'
+    Show-Error 'Quick Mode Switcher needs administrator rights. Run it from an Administrator PowerShell, or install it with Install-QuickModeSwitcher.ps1.'
     exit 1
 }
 
 # Only one copy at a time
 $created = $false
-$script:mutex = New-Object System.Threading.Mutex($true, 'Local\LaptopQuickModeSwitcher', [ref]$created)
+$script:mutex = New-Object System.Threading.Mutex($true, 'Local\QuickModeSwitcher', [ref]$created)
 if (-not $created) {
-    Write-Host 'Laptop Quick Mode Switcher is already running; look for its icon in the taskbar tray.'
+    Write-Host 'Quick Mode Switcher is already running; look for its icon in the taskbar tray.'
     exit
 }
 
@@ -68,7 +68,7 @@ $script:settings = Get-Settings
 $script:inst  = Get-CimInstance -Namespace root/wmi -ClassName hpqBIntM -ErrorAction SilentlyContinue | Select-Object -First 1
 $script:inCls = Get-CimClass   -Namespace root/wmi -ClassName hpqBDataIn -ErrorAction SilentlyContinue
 if (-not $script:inst -or -not $script:inCls) {
-    Show-Error "This laptop doesn't have HP's BIOS mode interface, so Laptop Quick Mode Switcher can't work here. tools\Test-Compatibility.ps1 shows details."
+    Show-Error "This laptop doesn't have HP's BIOS mode interface, so Quick Mode Switcher can't work here. tools\Test-Compatibility.ps1 shows details."
     exit 1
 }
 
@@ -83,7 +83,7 @@ function Invoke-Bios([uint32]$command, [byte[]]$data, [string]$method) {
     (Invoke-CimMethod -InputObject $script:inst -MethodName $method -Arguments @{ InData = $din } -ErrorAction Stop).OutData
 }
 
-# Returns the mode (0-4), or -1 if the reply doesn't look like the one Laptop Quick Mode Switcher expects
+# Returns the mode (0-4), or -1 if the reply doesn't look like the one Quick Mode Switcher expects
 function Read-Mode {
     try {
         $o = Invoke-Bios 1 ([byte[]](0, 0, 0, 0)) 'hpqBIOSInt128'
@@ -143,7 +143,7 @@ function New-ModeIcon([string]$letter, [string]$hex) {
     $g.Dispose(); $brush.Dispose(); $pen.Dispose(); $path.Dispose(); $ref.Dispose(); $m.Dispose(); $family.Dispose()
     $h = $bmp.GetHicon()
     $icon = [System.Drawing.Icon]::FromHandle($h).Clone()
-    [void][LaptopQuickModeSwitcher.Native]::DestroyIcon($h)
+    [void][QuickModeSwitcher.Native]::DestroyIcon($h)
     $bmp.Dispose()
     return $icon
 }
@@ -160,7 +160,7 @@ $script:warned  = $false
 $script:userPicked = $false   # set once a mode is picked from the menu
 
 function Show-Warning([string]$text) {
-    $script:tray.ShowBalloonTip(6000, 'Laptop Quick Mode Switcher', $text, [System.Windows.Forms.ToolTipIcon]::Warning)
+    $script:tray.ShowBalloonTip(6000, 'Quick Mode Switcher', $text, [System.Windows.Forms.ToolTipIcon]::Warning)
 }
 
 function Update-State {
@@ -175,14 +175,14 @@ function Update-State {
     }
     if ($ok) {
         $script:tray.Icon = $script:icons[$m]
-        $script:tray.Text = "Laptop Quick Mode Switcher: $($modeNames[$m])"
+        $script:tray.Text = "Quick Mode Switcher: $($modeNames[$m])"
         $script:warned = $false
     } else {
         $script:tray.Icon = $script:warnIcon
-        $script:tray.Text = 'Laptop Quick Mode Switcher: BIOS reply not recognized'
+        $script:tray.Text = 'Quick Mode Switcher: BIOS reply not recognized'
         if (-not $script:warned) {
             $script:warned = $true
-            Show-Warning 'The BIOS reply did not look like the one Laptop Quick Mode Switcher expects, so switching is off. Run tools\Get-ModeValues.ps1 to see what changed.'
+            Show-Warning 'The BIOS reply did not look like the one Quick Mode Switcher expects, so switching is off. Run tools\Get-ModeValues.ps1 to see what changed.'
         }
     }
 }

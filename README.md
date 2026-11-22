@@ -1,6 +1,6 @@
-# Laptop Quick Mode Switcher
+# Quick Mode Switcher
 
-A small system-tray app for HP laptops that switches between the laptop's modes (Performance, Balanced, Cool, Quiet and Power Saver) without opening My HP. Click the tray icon, pick a mode, done.
+**A system-tray mode switcher for HP laptops.** Switch between Performance, Balanced, Cool, Quiet and Power Saver in two clicks, without opening My HP.
 
 Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. Other HP laptops may work; see [Other HP laptops](#other-hp-laptops). This is an independent project, not made by or affiliated with HP.
 
@@ -63,27 +63,27 @@ This app won't work on Omen and Victus laptops, which use different values. Othe
 The installer:
 
 - checks that your laptop answers the mode command, and asks before going on if it doesn't
-- copies the app to `C:\Program Files\LaptopQuickModeSwitcher`
-- creates a scheduled task, "Laptop Quick Mode Switcher", that starts it with admin rights whenever you sign in, without an admin prompt
+- copies the app to `C:\Program Files\QuickModeSwitcher`
+- creates a scheduled task, "Quick Mode Switcher", that starts it with admin rights whenever you sign in, without an admin prompt
 - adds the app to Windows' Installed apps, so you can uninstall it from Settings
 - starts it
 
 The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
 
-If you'd rather use the command line, run `powershell -ExecutionPolicy Bypass -File .\Install-LaptopQuickModeSwitcher.ps1` from the folder instead.
+If you'd rather use the command line, run `powershell -ExecutionPolicy Bypass -File .\Install-QuickModeSwitcher.ps1` from the folder instead.
 
-After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\LaptopQuickModeSwitcher`. Keep the folder only if you want the scripts in `tools/`.
+After installing, you can delete the downloaded folder. Everything the app needs, including its uninstaller, is in `C:\Program Files\QuickModeSwitcher`. Keep the folder only if you want the scripts in `tools/`.
 
 **To try it without installing,** right-click the Start button, choose **Terminal (Admin)**, and run these, adjusting the folder path to where you extracted it. It runs until you choose Exit, and doesn't start again on its own.
 
 ```
-cd "$env:USERPROFILE\Downloads\laptop-quick-mode-switcher-main"
-powershell -ExecutionPolicy Bypass -File .\LaptopQuickModeSwitcher.ps1
+cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
+powershell -ExecutionPolicy Bypass -File .\QuickModeSwitcher.ps1
 ```
 
 **To update,** download the new version and double-click its **Install.cmd**. It stops the running copy, replaces it and keeps your settings. Settings → Apps → Installed apps shows which version you have.
 
-**To uninstall,** go to Settings → Apps → Installed apps → **Laptop Quick Mode Switcher** → Uninstall, or double-click **Uninstall.cmd** in the downloaded folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
+**To uninstall,** go to Settings → Apps → Installed apps → **Quick Mode Switcher** → Uninstall, or double-click **Uninstall.cmd** in the downloaded folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
 
 ## If you keep My HP
 
@@ -100,19 +100,19 @@ If My HP comes back anyway, this app keeps working; you'll just see the brief sw
 
 ## Troubleshooting
 
-- **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `LaptopQuickModeSwitcher.ps1` directly from an Administrator PowerShell to see any error, or look at the "Laptop Quick Mode Switcher" task in Task Scheduler.
-- **Nothing happens when I run `LaptopQuickModeSwitcher.ps1`.** It's already running, probably the installed copy; look for its icon.
+- **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `QuickModeSwitcher.ps1` directly from an Administrator PowerShell to see any error, or look at the "Quick Mode Switcher" task in Task Scheduler.
+- **Nothing happens when I run `QuickModeSwitcher.ps1`.** It's already running, probably the installed copy; look for its icon.
 - **The icon is a red `!`.** The laptop's reply wasn't what the app expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
 - **The mode changes on its own.** That's My HP (see [If you keep My HP](#if-you-keep-my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
 - **An old icon stays in the tray after updating or uninstalling.** Windows removes it as soon as you move the mouse over it.
-- **Settings** are in `settings.json` next to the app, which is `C:\Program Files\LaptopQuickModeSwitcher` when installed.
+- **Settings** are in `settings.json` next to the app, which is `C:\Program Files\QuickModeSwitcher` when installed.
 
 ## Tools
 
 Helper scripts in `tools/`, for checking compatibility and seeing what's going on. To run one, right-click the Start button, choose **Terminal (Admin)**, go to the downloaded folder and run the script, for example:
 
 ```
-cd "$env:USERPROFILE\Downloads\laptop-quick-mode-switcher-main"
+cd "$env:USERPROFILE\Downloads\quick-mode-switcher-main"
 powershell -ExecutionPolicy Bypass -File .\tools\Test-Compatibility.ps1
 ```
 
