@@ -15,6 +15,9 @@ Add-Type -Namespace HPQuickModes -Name Native -MemberDefinition @'
 # Draw at the screen's real scale, so the icon and menu are sharp instead of stretched
 [void][HPQuickModes.Native]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
+# If something unexpected fails inside the menu or a timer, keep running instead of showing a crash dialog
+[System.Windows.Forms.Application]::SetUnhandledExceptionMode([System.Windows.Forms.UnhandledExceptionMode]::CatchException)
+[System.Windows.Forms.Application]::add_ThreadException({ param($s, $e) })
 
 function Show-Error([string]$text) {
     [void][System.Windows.Forms.MessageBox]::Show($text, 'HP Quick Modes', 'OK', 'Error')
@@ -162,6 +165,8 @@ function Show-Warning([string]$text) {
 
 function Update-State {
     $m = Read-Mode
+    # One failed read can be a blip (for example right after waking from sleep), so try once more
+    if ($m -lt 0) { Start-Sleep -Milliseconds 500; $m = Read-Mode }
     $script:current = $m
     $ok = $m -ge 0
     for ($i = 0; $i -lt 5; $i++) {
