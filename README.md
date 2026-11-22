@@ -152,7 +152,7 @@ Safety checks:
 ## Limitations
 
 - It sets the BIOS mode only. Anything myHP does on top of that, such as Smart Sense's automatic switching or Power Saver's OLED screen power saving, isn't replicated.
-- Memory use is that of a PowerShell process, roughly 50–100 MB (about 60 MB on the Spectre it was made for).
+- Memory use is that of a PowerShell process: about 20–60 MB on the Spectre it was made for, shrinking once it's been idle a while.
 
 ## Credits
 
