@@ -71,6 +71,8 @@ The modes are a single BIOS setting exposed through HP's WMI interface (`root\wm
 
 You don't need to uninstall My HP, but there's one interaction to know about. Its background process, `HP.SystemControl.Background.exe`, re-applies My HP's last pick when the charger is plugged in or unplugged, several times over the first 5 seconds or so. HP Quick Modes waits for it to finish and then switches back to your mode, so you'll see My HP's pick for about 7 seconds.
 
+**If you keep My HP, set it to the mode you use most.** Balanced is a sensible choice. Whatever My HP is left on acts as your default: it's the mode you'll see for those few seconds after plugging in or unplugging, and the mode the laptop may start in if "Re-apply last mode at login" is turned off. Choosing modes in HP Quick Modes doesn't change My HP's setting.
+
 To remove My HP:
 
 1. Settings → Apps → Installed apps → **myHP** → Uninstall.
