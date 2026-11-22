@@ -78,6 +78,8 @@ To remove My HP:
 
 If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again.
 
+To see this in action, run `tools/hp-quick-modes-test.ps1` (read-only) while HP Quick Modes is running, then plug in and unplug a few times. It times how long My HP's switch lasts before HP Quick Modes switches back.
+
 ## Safety
 
 - Sends only the read and write commands above, and only values `00`–`04`.
