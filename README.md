@@ -11,12 +11,12 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 Each mode is a setting in the laptop's BIOS that controls fan speed and CPU performance together. They're the same modes My HP offers, and the descriptions below follow My HP's.
 
 | Icon | Mode | What it does |
-|---|---|---|
-| <img src="docs/icons/performance.png" width="32" alt="P"> red | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
-| <img src="docs/icons/balanced.png" width="32" alt="B"> gray | Balanced | Balances fan speed, performance and temperature. |
-| <img src="docs/icons/cool.png" width="32" alt="C"> blue | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
-| <img src="docs/icons/quiet.png" width="32" alt="Q"> violet | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
-| <img src="docs/icons/power-saver.png" width="32" alt="S"> green | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
+|:---:|---|---|
+| <img src="docs/icons/performance.png" width="32" alt="P"><br>P (red) | Performance | Raises fan speed so the CPU can work harder, for demanding software. Fans get louder and the laptop may run warmer. |
+| <img src="docs/icons/balanced.png" width="32" alt="B"><br>B (gray) | Balanced | Balances fan speed, performance and temperature. |
+| <img src="docs/icons/cool.png" width="32" alt="C"><br>C (blue) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
+| <img src="docs/icons/quiet.png" width="32" alt="Q"><br>Q (violet) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
+| <img src="docs/icons/power-saver.png" width="32" alt="S"><br>S (green) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
 
 ## Using it
 
