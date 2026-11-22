@@ -1,16 +1,18 @@
 # Install-HPQuickModes.ps1
-# Installs HPQuickModes.ps1 so it starts at login with admin rights and no prompt.
-# Run in an Administrator PowerShell, with HPQuickModes.ps1 in the same folder as this file:
+# Installs HPQuickModes.ps1 so it starts at sign-in with admin rights and no prompt, and adds an
+# entry to Windows' Installed apps so it can be uninstalled from Settings.
+# Run in an Administrator PowerShell, from the folder with HPQuickModes.ps1 and Uninstall-HPQuickModes.ps1:
 #   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
-# To remove everything it set up:
-#   powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1 -Uninstall
+# To remove everything it set up, uninstall from Settings > Apps > Installed apps, or run
+# Uninstall-HPQuickModes.ps1 (-Uninstall here does the same).
 
 param([switch]$Uninstall)
 
 $taskName = 'HP Quick Modes'
 # Program Files is admin-only, so nothing without admin rights can change the script that runs as admin
-$dir    = Join-Path $env:ProgramFiles 'HPQuickModes'
-$target = Join-Path $dir 'HPQuickModes.ps1'
+$dir     = Join-Path $env:ProgramFiles 'HPQuickModes'
+$target  = Join-Path $dir 'HPQuickModes.ps1'
+$appsKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\HPQuickModes'
 
 $id = [Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not ([Security.Principal.WindowsPrincipal]$id).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -27,16 +29,14 @@ function Stop-Tray {
 }
 
 if ($Uninstall) {
-    Stop-Tray
-    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host 'Removed the scheduled task and the HPQuickModes folder.' -ForegroundColor Green
-    exit 0
+    & (Join-Path $PSScriptRoot 'Uninstall-HPQuickModes.ps1')
+    exit
 }
 
-$src = Join-Path $PSScriptRoot 'HPQuickModes.ps1'
-if (-not (Test-Path $src)) {
-    Write-Host "HPQuickModes.ps1 needs to be in the same folder as this installer ($PSScriptRoot)." -ForegroundColor Red
+$src       = Join-Path $PSScriptRoot 'HPQuickModes.ps1'
+$uninstSrc = Join-Path $PSScriptRoot 'Uninstall-HPQuickModes.ps1'
+if (-not (Test-Path $src) -or -not (Test-Path $uninstSrc)) {
+    Write-Host "HPQuickModes.ps1 and Uninstall-HPQuickModes.ps1 need to be in the same folder as this installer ($PSScriptRoot)." -ForegroundColor Red
     exit 1
 }
 
@@ -64,7 +64,17 @@ if (-not (Test-Bios)) {
 Stop-Tray
 New-Item -ItemType Directory -Path $dir -Force | Out-Null
 Copy-Item -Path $src -Destination $target -Force
-Unblock-File -Path $target
+Copy-Item -Path $uninstSrc -Destination $dir -Force
+Get-ChildItem -Path $dir -Filter '*.ps1' | Unblock-File
+
+# Entry in Settings > Apps > Installed apps, so it can be uninstalled like any other app
+New-Item -Path $appsKey -Force | Out-Null
+Set-ItemProperty -Path $appsKey -Name DisplayName     -Value 'HP Quick Modes'
+Set-ItemProperty -Path $appsKey -Name Publisher       -Value 'HP Quick Modes (unofficial, not made by HP)'
+Set-ItemProperty -Path $appsKey -Name InstallLocation -Value $dir
+Set-ItemProperty -Path $appsKey -Name UninstallString -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $dir 'Uninstall-HPQuickModes.ps1')`""
+Set-ItemProperty -Path $appsKey -Name NoModify        -Value 1 -Type DWord
+Set-ItemProperty -Path $appsKey -Name NoRepair        -Value 1 -Type DWord
 
 # The task starts the app for whoever is signed in, which may not be the account running this installer
 $user = (Get-CimInstance Win32_ComputerSystem).UserName

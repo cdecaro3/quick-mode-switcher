@@ -6,7 +6,12 @@
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-Add-Type -Namespace HPQuickModes -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern bool DestroyIcon(System.IntPtr hIcon);'
+Add-Type -Namespace HPQuickModes -Name Native -MemberDefinition @'
+[DllImport("user32.dll")] public static extern bool DestroyIcon(System.IntPtr hIcon);
+[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+'@
+# Draw at the screen's real scale, so the icon and menu are sharp instead of stretched
+[void][HPQuickModes.Native]::SetProcessDPIAware()
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 function Show-Error([string]$text) {
@@ -31,7 +36,7 @@ if (-not $created) {
 # Index = BIOS value
 $modeNames = @('Performance', 'Balanced', 'Cool', 'Quiet', 'Power Saver')
 $letters   = @('P', 'B', 'C', 'Q', 'S')
-$colors    = @('#E8590C', '#1C7ED6', '#1098AD', '#37B24D', '#868E96')
+$colors    = @('#D9480F', '#1971C2', '#0C8599', '#2B8A3E', '#495057')   # dark enough for a white letter
 
 # ---------- Settings (last mode, re-apply at login) ----------
 $settingsPath = Join-Path $PSScriptRoot 'settings.json'
@@ -90,19 +95,47 @@ function Write-Mode([int]$mode) {
 }
 
 # ---------- Icons: a colored circle with the mode's letter ----------
+# Drawn at the tray's actual icon size. The letter is centered on its real outline (not the font's
+# text box, which includes empty space), and sized to the height of a capital H so all letters match.
+$script:iconSize = [Math]::Max(16, [System.Windows.Forms.SystemInformation]::SmallIconSize.Width)
+
 function New-ModeIcon([string]$letter, [string]$hex) {
-    $bmp = New-Object System.Drawing.Bitmap 32, 32
+    $size = $script:iconSize
+    $bmp = New-Object System.Drawing.Bitmap $size, $size
     $g = [System.Drawing.Graphics]::FromImage($bmp)
-    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
-    $brush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml($hex))
-    $g.FillEllipse($brush, 0, 0, 31, 31)
-    $font = New-Object System.Drawing.Font('Segoe UI', 20, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
-    $fmt = New-Object System.Drawing.StringFormat
-    $fmt.Alignment = [System.Drawing.StringAlignment]::Center
-    $fmt.LineAlignment = [System.Drawing.StringAlignment]::Center
-    $g.DrawString($letter, $font, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF(0, 1, 32, 32)), $fmt)
-    $g.Dispose(); $brush.Dispose(); $font.Dispose(); $fmt.Dispose()
+    $g.SmoothingMode   = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+    $g.Clear([System.Drawing.Color]::Transparent)
+
+    # Circle, with a slightly darker rim so it stands out on both light and dark taskbars
+    $color = [System.Drawing.ColorTranslator]::FromHtml($hex)
+    $rim   = [System.Drawing.Color]::FromArgb(255, [int]($color.R * 0.65), [int]($color.G * 0.65), [int]($color.B * 0.65))
+    $brush = New-Object System.Drawing.SolidBrush $color
+    $pen   = New-Object System.Drawing.Pen($rim, [float][Math]::Max(1, $size / 16))
+    [float]$d = $size - 1
+    [float]$w = $pen.Width
+    $g.FillEllipse($brush, [float]0, [float]0, $d, $d)
+    $g.DrawEllipse($pen, [float]($w / 2), [float]($w / 2), [float]($d - $w), [float]($d - $w))
+
+    # Letter
+    $family = New-Object System.Drawing.FontFamily 'Segoe UI'
+    $style  = [int][System.Drawing.FontStyle]::Bold
+    $fmt    = [System.Drawing.StringFormat]::GenericTypographic
+    $ref = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $ref.AddString('H', $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $path.AddString($letter, $family, $style, 100, (New-Object System.Drawing.PointF(0, 0)), $fmt)
+    $rb = $ref.GetBounds()
+    $lb = $path.GetBounds()
+    $scale = ($size * 0.52) / $rb.Height
+    $m = New-Object System.Drawing.Drawing2D.Matrix
+    $m.Translate([float]($size / 2), [float]($size / 2))                               # 3. move to the icon's center
+    $m.Scale([float]$scale, [float]$scale)                                             # 2. scale to size
+    $m.Translate([float](-($lb.X + $lb.Width / 2)), [float](-($rb.Y + $rb.Height / 2)))  # 1. center the letter at 0,0
+    $path.Transform($m)
+    $g.FillPath([System.Drawing.Brushes]::White, $path)
+
+    $g.Dispose(); $brush.Dispose(); $pen.Dispose(); $path.Dispose(); $ref.Dispose(); $m.Dispose(); $family.Dispose()
     $h = $bmp.GetHicon()
     $icon = [System.Drawing.Icon]::FromHandle($h).Clone()
     [void][HPQuickModes.Native]::DestroyIcon($h)

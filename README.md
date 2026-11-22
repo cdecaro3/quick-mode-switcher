@@ -33,7 +33,7 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
    powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1
    ```
 
-The installer checks that your laptop answers the mode command, copies the app to `C:\Program Files\HPQuickModes`, and creates a scheduled task, "HP Quick Modes", that starts it at sign-in with admin rights. The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
+The installer checks that your laptop answers the mode command, copies the app to `C:\Program Files\HPQuickModes`, creates a scheduled task, "HP Quick Modes", that starts it at sign-in with admin rights, and adds HP Quick Modes to Windows' Installed apps. The icon may land in the taskbar's `^` overflow area; drag it onto the taskbar to keep it visible.
 
 To try it without installing, run this from the same folder instead. It runs until you choose Exit from its menu.
 
@@ -43,11 +43,7 @@ powershell -ExecutionPolicy Bypass -File .\HPQuickModes.ps1
 
 To update, download the new version and run the installer again. Your settings are kept.
 
-To uninstall:
-
-```
-powershell -ExecutionPolicy Bypass -File .\Install-HPQuickModes.ps1 -Uninstall
-```
+To uninstall, go to Settings → Apps → Installed apps → **HP Quick Modes** → Uninstall, or run `Uninstall-HPQuickModes.ps1` from the repo folder. Either one removes the app, its scheduled task and its settings; the laptop stays in whatever mode it's in.
 
 ## Other HP laptops
 
