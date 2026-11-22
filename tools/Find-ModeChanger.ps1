@@ -61,11 +61,11 @@ function Get-Origin([string]$cmd) {
     return 'unknown'
 }
 
-# Is HP Quick Modes running? It would switch the mode back and spoil the test.
+# Is Laptop Quick Mode Switcher running? It would switch the mode back and spoil the test.
 $tray = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*HPQuickModes.ps1*' }
+    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*LaptopQuickModeSwitcher.ps1*' }
 if ($tray) {
-    Write-Host 'HP Quick Modes is running. Exit it from its tray menu first, then run this again.' -ForegroundColor Red
+    Write-Host 'Laptop Quick Mode Switcher is running. Exit it from its tray menu first, then run this again.' -ForegroundColor Red
     exit 1
 }
 

@@ -1,8 +1,8 @@
 # Watch-PlugUnplug.ps1
 # Read-only. Shows what happens to the mode when the charger is plugged in or unplugged: whether
-# My HP changes it, and how long HP Quick Modes takes to switch it back. It changes nothing.
+# My HP changes it, and how long Laptop Quick Mode Switcher takes to switch it back. It changes nothing.
 # To see the switch-back: pick one mode in My HP (for example Balanced), then a different one in the
-# HP Quick Modes tray menu (for example Quiet), and leave HP Quick Modes running.
+# Laptop Quick Mode Switcher tray menu (for example Quiet), and leave Laptop Quick Mode Switcher running.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Watch-PlugUnplug.ps1
 # Then unplug and plug in 2-3 times, about 10 seconds apart. Press Enter to stop.
@@ -42,11 +42,11 @@ function Log([string]$s) {
     $log.Add($line); Write-Host $line
 }
 
-# Is HP Quick Modes running?
+# Is Laptop Quick Mode Switcher running?
 $tray = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*HPQuickModes.ps1*' }
-if ($tray) { Log 'HP Quick Modes is running.' }
-else { Log 'WARNING: HP Quick Modes does not seem to be running, so nothing will switch the mode back.' }
+    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*LaptopQuickModeSwitcher.ps1*' }
+if ($tray) { Log 'Laptop Quick Mode Switcher is running.' }
+else { Log 'WARNING: Laptop Quick Mode Switcher does not seem to be running, so nothing will switch the mode back.' }
 
 $want = Read-Mode
 if ($want -lt 0) { Log 'Could not read the BIOS mode.'; exit }
@@ -92,7 +92,7 @@ foreach ($e in $events) {
     } elseif ($null -eq $e.restoredAfter) {
         Log ("{0}: switched to {1} after {2:N1} s, and it was NOT switched back." -f $e.label, (Show-Mode $e.to), $e.switchedAfter)
     } else {
-        Log ("{0}: switched to {1} after {2:N1} s; HP Quick Modes switched it back {3:N1} s later." -f $e.label, (Show-Mode $e.to), $e.switchedAfter, ($e.restoredAfter - $e.switchedAfter))
+        Log ("{0}: switched to {1} after {2:N1} s; Laptop Quick Mode Switcher switched it back {3:N1} s later." -f $e.label, (Show-Mode $e.to), $e.switchedAfter, ($e.restoredAfter - $e.switchedAfter))
     }
 }
 $end = Read-Mode

@@ -1,5 +1,5 @@
 # Test-Compatibility.ps1
-# Read-only. Checks whether this laptop's BIOS supports the mode command HP Quick Modes uses,
+# Read-only. Checks whether this laptop's BIOS supports the mode command Laptop Quick Mode Switcher uses,
 # and lists the HP software running. It changes nothing.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Test-Compatibility.ps1
@@ -49,7 +49,7 @@ if (-not $cls -or -not $inCls -or -not $inst) {
         if ($o.rwReturnCode -eq 0 -and $sign -eq 'PASS' -and $b[0] -le 4) {
             $verdict = "Likely compatible: the BIOS answered the mode command and reports $($names[$b[0]]). Run Get-ModeValues.ps1 to confirm the values match."
         } elseif ($o.rwReturnCode -eq 0) {
-            $verdict = "Unclear: the BIOS answered, but with a mode value ($('{0:X2}' -f $b[0])) HP Quick Modes doesn't know."
+            $verdict = "Unclear: the BIOS answered, but with a mode value ($('{0:X2}' -f $b[0])) Laptop Quick Mode Switcher doesn't know."
         } else {
             $verdict = "Not compatible: the BIOS doesn't support the mode command (return code $($o.rwReturnCode))."
         }

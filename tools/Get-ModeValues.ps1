@@ -1,6 +1,6 @@
 # Get-ModeValues.ps1
 # Read-only. Records the BIOS value for each mode you pick in My HP and checks it against the
-# values HP Quick Modes uses. It changes nothing. Needs My HP installed.
+# values Laptop Quick Mode Switcher uses. It changes nothing. Needs My HP installed.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Get-ModeValues.ps1
 # Each time you pick a mode in My HP, wait about 5 seconds, type that mode's name here and press
@@ -50,14 +50,14 @@ while ($true) {
     $key = $label.Trim().ToLower()
     if ($expected.ContainsKey($key)) {
         if ($raw[0] -eq $expected[$key]) { $matched++; Log "${label}: [$(Hex $raw)]  first byte matches ($('{0:X2}' -f $expected[$key]))" }
-        else { $different++; Log "${label}: [$(Hex $raw)]  DIFFERENT: HP Quick Modes expects $('{0:X2}' -f $expected[$key])" }
+        else { $different++; Log "${label}: [$(Hex $raw)]  DIFFERENT: Laptop Quick Mode Switcher expects $('{0:X2}' -f $expected[$key])" }
     } else {
         Log "${label}: [$(Hex $raw)]  (not one of: Performance, Balanced, Cool, Quiet, Power Saver)"
     }
 }
 
 Log ''
-if ($different -gt 0) { Log "RESULT: $different mode(s) use different values, so HP Quick Modes would set the wrong modes on this laptop." }
+if ($different -gt 0) { Log "RESULT: $different mode(s) use different values, so Laptop Quick Mode Switcher would set the wrong modes on this laptop." }
 elseif ($matched -gt 0) { Log "RESULT: all $matched mode(s) checked match. Next, try Test-ModeSwitch.ps1." }
 else { Log 'RESULT: no modes checked.' }
 

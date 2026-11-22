@@ -1,14 +1,14 @@
-# Uninstall-HPQuickModes.ps1
-# Removes HP Quick Modes: stops it, deletes its scheduled task and its entry in Windows' Installed apps,
-# and deletes C:\Program Files\HPQuickModes (including its settings). It doesn't change the current mode.
-# Run it from Settings > Apps > Installed apps > HP Quick Modes > Uninstall, or:
-#   powershell -ExecutionPolicy Bypass -File .\Uninstall-HPQuickModes.ps1
+# Uninstall-LaptopQuickModeSwitcher.ps1
+# Removes Laptop Quick Mode Switcher: stops it, deletes its scheduled task and its entry in Windows' Installed apps,
+# and deletes C:\Program Files\LaptopQuickModeSwitcher (including its settings). It doesn't change the current mode.
+# Run it from Settings > Apps > Installed apps > Laptop Quick Mode Switcher > Uninstall, or:
+#   powershell -ExecutionPolicy Bypass -File .\Uninstall-LaptopQuickModeSwitcher.ps1
 
 Add-Type -AssemblyName System.Windows.Forms
 
-$taskName = 'HP Quick Modes'
-$dir      = Join-Path $env:ProgramFiles 'HPQuickModes'
-$appsKey  = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\HPQuickModes'
+$taskName = 'Laptop Quick Mode Switcher'
+$dir      = Join-Path $env:ProgramFiles 'LaptopQuickModeSwitcher'
+$appsKey  = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\LaptopQuickModeSwitcher'
 
 # Run from a temporary copy when started from the install folder (as Settings does), so the folder
 # can be deleted; and ask for admin rights if it was started without them.
@@ -18,7 +18,7 @@ $fromInstallDir = $PSScriptRoot -and ($PSScriptRoot.TrimEnd('\') -eq $dir.TrimEn
 if ($fromInstallDir -or -not $isAdmin) {
     $runFrom = $PSCommandPath
     if ($fromInstallDir) {
-        $runFrom = Join-Path $env:TEMP 'Uninstall-HPQuickModes.ps1'
+        $runFrom = Join-Path $env:TEMP 'Uninstall-LaptopQuickModeSwitcher.ps1'
         Copy-Item -Path $PSCommandPath -Destination $runFrom -Force
     }
     $launch = @{ FilePath = 'powershell.exe'; ArgumentList = "-NoProfile -ExecutionPolicy Bypass -File `"$runFrom`"" }
@@ -26,21 +26,21 @@ if ($fromInstallDir -or -not $isAdmin) {
     try {
         Start-Process @launch
     } catch {
-        [void][System.Windows.Forms.MessageBox]::Show('Uninstalling HP Quick Modes needs administrator rights.', 'HP Quick Modes', 'OK', 'Warning')
+        [void][System.Windows.Forms.MessageBox]::Show('Uninstalling Laptop Quick Mode Switcher needs administrator rights.', 'Laptop Quick Mode Switcher', 'OK', 'Warning')
     }
     exit
 }
 Set-Location $env:TEMP   # don't hold the install folder open
 
 function Get-AppTasks {
-    # The task by name, plus any other task that runs HP Quick Modes (for example, from a version with a different task name)
+    # The task by name, plus any other task that runs Laptop Quick Mode Switcher (for example, from a version with a different task name)
     Get-ScheduledTask -ErrorAction SilentlyContinue |
-        Where-Object { $_.TaskName -eq $taskName -or (@($_.Actions | ForEach-Object { $_.Arguments }) -like '*HPQuickModes.ps1*') }
+        Where-Object { $_.TaskName -eq $taskName -or (@($_.Actions | ForEach-Object { $_.Arguments }) -like '*LaptopQuickModeSwitcher.ps1*') }
 }
 function Get-AppProcesses {
     Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*HPQuickModes.ps1*' -and
-                       $_.CommandLine -notlike '*Install-HPQuickModes*' }   # also skips this uninstaller
+        Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*LaptopQuickModeSwitcher.ps1*' -and
+                       $_.CommandLine -notlike '*Install-LaptopQuickModeSwitcher*' }   # also skips this uninstaller
 }
 
 # Stop it
@@ -55,18 +55,18 @@ Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
 
 # Check that everything is gone
 $left = @()
-if (Get-AppTasks)       { $left += 'its scheduled task (remove "HP Quick Modes" in Task Scheduler)' }
+if (Get-AppTasks)       { $left += 'its scheduled task (remove "Laptop Quick Mode Switcher" in Task Scheduler)' }
 if (Test-Path $appsKey) { $left += 'its entry in Installed apps' }
 if (Test-Path $dir)     { $left += "its folder ($dir), which you can delete yourself" }
 if (Get-AppProcesses)   { $left += 'the running app (restart to stop it)' }
 
 $msg = if ($left) {
-    "HP Quick Modes was removed, except for:`n- " + ($left -join "`n- ")
+    "Laptop Quick Mode Switcher was removed, except for:`n- " + ($left -join "`n- ")
 } else {
-    'HP Quick Modes was completely removed. The laptop stays in its current mode.'
+    'Laptop Quick Mode Switcher was completely removed. The laptop stays in its current mode.'
 }
 Write-Host $msg
-[void][System.Windows.Forms.MessageBox]::Show($msg, 'HP Quick Modes', 'OK', $(if ($left) { 'Warning' } else { 'Information' }))
+[void][System.Windows.Forms.MessageBox]::Show($msg, 'Laptop Quick Mode Switcher', 'OK', $(if ($left) { 'Warning' } else { 'Information' }))
 
 # Remove the temporary copy this ran from, if it was one
 if ($PSCommandPath -like "$env:TEMP*") { Remove-Item -Path $PSCommandPath -Force -ErrorAction SilentlyContinue }
