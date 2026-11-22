@@ -10,7 +10,7 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 
 - Tray icon showing the current mode as a colored letter (P, B, C, Q, S)
 - Left- or right-click for a menu of all five modes, with the current one checked
-- Keeps your mode when you plug in or unplug. If My HP is installed, its background process switches back to My HP's last pick then; HP Quick Modes switches back to yours within a few seconds. Turn this off with "Same mode plugged in and on battery".
+- Keeps your mode when you plug in or unplug, even if My HP is still installed (see [My HP](#my-hp))
 - Starts at login without an admin prompt
 - Optionally re-applies your last mode at login
 - Refuses to switch if the BIOS reply looks unfamiliar, and warns if a switch doesn't take
@@ -67,6 +67,17 @@ The modes are a single BIOS setting exposed through HP's WMI interface (`root\wm
 - **Read:** `Command = 1`, method `hpqBIOSInt128`. The first byte of the reply is the mode; the second is a status flag that changes on its own and is ignored.
 - **Write:** `Command = 2`, method `hpqBIOSInt0`, data `[mode] 00 00 00`.
 
+## My HP
+
+You don't need to uninstall My HP, but there's one interaction to know about. Its background process, `HP.SystemControl.Background.exe`, re-applies My HP's last pick about half a second after the charger is plugged in or unplugged. HP Quick Modes watches for that and switches back to your mode, so you may see My HP's pick for about a second.
+
+To remove My HP:
+
+1. Settings → Apps → Installed apps → **myHP** → Uninstall.
+2. Search Start for **Change device installation settings** and choose **No**. HP delivers My HP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
+
+If My HP comes back anyway, HP Quick Modes keeps working; you'll just see the brief switch again.
+
 ## Safety
 
 - Sends only the read and write commands above, and only values `00`–`04`.
@@ -77,7 +88,6 @@ The modes are a single BIOS setting exposed through HP's WMI interface (`root\wm
 ## Limitations
 
 - Sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or dimming the screen in Power Saver, isn't replicated.
-- My HP's background process, `HP.SystemControl.Background.exe` (part of the myHP app), re-applies My HP's last pick whenever the charger is plugged in or unplugged. HP Quick Modes switches back, but you'll see My HP's pick for a few seconds. Uninstalling My HP stops this.
 - Memory use is that of a PowerShell process, roughly 50–100 MB.
 
 ## Credits

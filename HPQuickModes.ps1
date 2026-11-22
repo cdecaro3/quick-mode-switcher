@@ -23,13 +23,12 @@ $colors    = @('#E8590C', '#1C7ED6', '#1098AD', '#37B24D', '#868E96')
 $settingsPath = Join-Path $PSScriptRoot 'settings.json'
 
 function Get-Settings {
-    $s = @{ lastMode = -1; restoreAtLogin = $true; keepAcrossPower = $true }
+    $s = @{ lastMode = -1; restoreAtLogin = $true }
     try {
         if (Test-Path $settingsPath) {
             $j = Get-Content $settingsPath -Raw | ConvertFrom-Json
             if ($j.lastMode -ge 0 -and $j.lastMode -le 4) { $s.lastMode = [int]$j.lastMode }
             if ($null -ne $j.restoreAtLogin) { $s.restoreAtLogin = [bool]$j.restoreAtLogin }
-            if ($null -ne $j.keepAcrossPower) { $s.keepAcrossPower = [bool]$j.keepAcrossPower }
         }
     } catch {}
     return $s
@@ -144,12 +143,13 @@ function Set-Mode([int]$mode) {
     }
 }
 
-# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick when the
-# charger is plugged in or unplugged. After a power change, switch back to the mode last picked here.
+# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's last pick about
+# half a second after the charger is plugged in or unplugged. Switch back to the mode picked here.
+# Without My HP installed, the mode doesn't change on its own, so this never has to act.
 function Restore-ChosenMode {
     Update-State
     $want = $script:settings.lastMode
-    if ($script:settings.keepAcrossPower -and $want -ge 0 -and $script:current -ge 0 -and $script:current -ne $want) {
+    if ($want -ge 0 -and $script:current -ge 0 -and $script:current -ne $want) {
         Set-Mode $want
     }
 }
@@ -162,12 +162,6 @@ for ($i = 0; $i -lt 5; $i++) {
     $script:items += $it
 }
 [void]$script:menu.Items.Add((New-Object System.Windows.Forms.ToolStripSeparator))
-
-$script:keepItem = New-Object System.Windows.Forms.ToolStripMenuItem('Same mode plugged in and on battery')
-$script:keepItem.CheckOnClick = $true
-$script:keepItem.Checked = $script:settings.keepAcrossPower
-$script:keepItem.add_Click({ $script:settings.keepAcrossPower = $script:keepItem.Checked; Save-Settings })
-[void]$script:menu.Items.Add($script:keepItem)
 
 $script:restoreItem = New-Object System.Windows.Forms.ToolStripMenuItem('Re-apply last mode at login')
 $script:restoreItem.CheckOnClick = $true
@@ -190,25 +184,28 @@ $script:tray.add_MouseUp({
 })
 
 # Watch for the charger being plugged in or unplugged (a cheap check, no BIOS call).
-# My HP may switch the mode then, so check a few seconds later and again after a while.
-$script:lastPower   = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
-$script:powerChange = $null
-$script:checksDone  = 0
-$checkDelays = @(4, 15)   # seconds after a power change
+# For 15 seconds after a change, check the mode every half second and switch back if My HP changed it.
+$script:lastPower    = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
+$script:watchUntil   = $null
+$script:lastChangeAt = $null
 
 $script:powerTimer = New-Object System.Windows.Forms.Timer
 $script:powerTimer.Interval = 2000
 $script:powerTimer.add_Tick({
     $p = [System.Windows.Forms.SystemInformation]::PowerStatus.PowerLineStatus
     if ($p -ne $script:lastPower) {
-        $script:lastPower   = $p
-        $script:powerChange = Get-Date
-        $script:checksDone  = 0
+        $script:lastPower    = $p
+        $script:lastChangeAt = Get-Date
+        $script:watchUntil   = $script:lastChangeAt.AddSeconds(15)
+        $script:powerTimer.Interval = 500
     }
-    if ($script:powerChange -and $script:checksDone -lt $checkDelays.Count -and
-        ((Get-Date) - $script:powerChange).TotalSeconds -ge $checkDelays[$script:checksDone]) {
-        $script:checksDone++
-        Restore-ChosenMode
+    if ($script:watchUntil) {
+        if ((Get-Date) -le $script:watchUntil) {
+            Restore-ChosenMode
+        } else {
+            $script:watchUntil = $null
+            $script:powerTimer.Interval = 2000
+        }
     }
 })
 
@@ -218,7 +215,7 @@ $script:timer = New-Object System.Windows.Forms.Timer
 $script:timer.Interval = 30000
 $script:timer.add_Tick({
     Update-State
-    $recent = $script:powerChange -and ((Get-Date) - $script:powerChange).TotalSeconds -lt 30
+    $recent = $script:lastChangeAt -and ((Get-Date) - $script:lastChangeAt).TotalSeconds -lt 30
     if (-not $recent -and $script:current -ge 0 -and $script:current -ne $script:settings.lastMode) {
         $script:settings.lastMode = $script:current
         Save-Settings
