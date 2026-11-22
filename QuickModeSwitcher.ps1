@@ -1,5 +1,5 @@
 # QuickModeSwitcher.ps1
-# System-tray menu for switching the HP Spectre x360 14-eu000's modes (fans, power limits).
+# System-tray menu for switching the HP Spectre x360 14-eu0000's modes (fans, power limits).
 # Sends only two BIOS commands: read the mode, and set a mode (00-04), the same ones tested with
 # tools\Test-ModeSwitch.ps1. Needs admin rights; Install-QuickModeSwitcher.ps1 makes it start at login
 # without a prompt.

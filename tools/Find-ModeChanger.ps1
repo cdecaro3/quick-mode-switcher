@@ -4,8 +4,8 @@
 #   Part 1 (read-only): lists HP's running programs and services, and which app each belongs to.
 #   Part 2: stops one app's programs at a time (until the next restart), sets a mode, and watches
 #           plug/unplug. It stops at the first app whose programs make the mode stick.
-# Before running: restart (so all HP software is running), pick a mode in My HP, and exit HP Quick
-# Modes (it would switch the mode back itself).
+# Before running: restart (so all HP software is running), pick a mode in My HP, and exit Quick
+# Mode Switcher (it would switch the mode back itself).
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Find-ModeChanger.ps1
 
@@ -63,7 +63,7 @@ function Get-Origin([string]$cmd) {
 
 # Is Quick Mode Switcher running? It would switch the mode back and spoil the test.
 $tray = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*QuickModeSwitcher.ps1*' }
+    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*QuickModeSwitcher.ps1*' -and $_.CommandLine -notlike '*Install-QuickModeSwitcher*' }
 if ($tray) {
     Write-Host 'Quick Mode Switcher is running. Exit it from its tray menu first, then run this again.' -ForegroundColor Red
     exit 1

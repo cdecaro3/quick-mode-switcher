@@ -44,7 +44,7 @@ function Log([string]$s) {
 
 # Is Quick Mode Switcher running?
 $tray = Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*QuickModeSwitcher.ps1*' }
+    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*QuickModeSwitcher.ps1*' -and $_.CommandLine -notlike '*Install-QuickModeSwitcher*' }
 if ($tray) { Log 'Quick Mode Switcher is running.' }
 else { Log 'WARNING: Quick Mode Switcher does not seem to be running, so nothing will switch the mode back.' }
 
