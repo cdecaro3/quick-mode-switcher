@@ -50,7 +50,7 @@ Check yours before installing. These scripts are in `tools/` and run the same wa
 2. `hp-mode-sample.ps1` is read-only. It records the BIOS value for each mode as you switch in My HP. The first byte should match the table below.
 3. `hp-mode-write-test.ps1` changes the mode once and switches back, asking before each step.
 
-Omen and Victus laptops use different values; [OmenMon](https://omenmon.github.io) covers those.
+HP Quick Modes won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
 
 ## How it works
 
