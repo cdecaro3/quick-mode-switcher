@@ -1,10 +1,10 @@
 # Find-ModeChanger.ps1
 # Finds which HP background program changes the mode when the charger is plugged in or unplugged.
-# On the Spectre x360 14 this is My HP's HP.SystemControl.Background.exe; use this on other models.
+# On the Spectre x360 14 this is myHP's HP.SystemControl.Background.exe; use this on other models.
 #   Part 1 (read-only): lists HP's running programs and services, and which app each belongs to.
 #   Part 2: stops one app's programs at a time (until the next restart), sets a mode, and watches
 #           plug/unplug. It stops at the first app whose programs make the mode stick.
-# Before running: restart (so all HP software is running), pick a mode in My HP, and exit Quick
+# Before running: restart (so all HP software is running), pick a mode in myHP, and exit Quick
 # Mode Switcher (it would switch the mode back itself).
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Find-ModeChanger.ps1
@@ -163,7 +163,7 @@ Log ''
 if ($found) {
     Log "RESULT: the mode stopped changing once $($found.Name) was stopped ($(($found.Group.Name | Sort-Object -Unique) -join ', ')). That's what switches it on plug/unplug."
 } else {
-    Log 'RESULT: no single app found. If nothing changed the mode in the first place, My HP''s pick may already match the mode this script set.'
+    Log 'RESULT: no single app found. If nothing changed the mode in the first place, myHP''s pick may already match the mode this script set.'
 }
 Log 'Stopped programs come back when you restart.'
 

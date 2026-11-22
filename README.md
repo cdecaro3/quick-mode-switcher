@@ -1,6 +1,6 @@
 # Quick Mode Switcher
 
-**A system-tray mode switcher for HP laptops.** Switch between Performance, Balanced, Cool, Quiet and Power Saver in two clicks, without opening My HP.
+**A system-tray mode switcher for HP laptops.** Switch between Performance, Balanced, Cool, Quiet and Power Saver in two clicks, without opening myHP.
 
 Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. Other HP laptops may work; see [Other HP laptops](#other-hp-laptops). This is an independent project, not made by or affiliated with HP.
 
@@ -8,7 +8,7 @@ Made for the **HP Spectre x360 14 (2024, 14-eu0000 series, Intel Core Ultra)**. 
 
 ## Modes
 
-Each mode is a setting in the laptop's BIOS that controls fan speed and CPU performance together. They're the same modes My HP offers, and the descriptions below follow My HP's.
+Each mode is a setting in the laptop's BIOS that controls fan speed and CPU performance together. They're the same modes myHP offers, and the descriptions below follow myHP's.
 
 | Icon | Mode | What it does |
 |:---:|---|---|
@@ -16,7 +16,7 @@ Each mode is a setting in the laptop's BIOS that controls fan speed and CPU perf
 | <img src="docs/icons/balanced.png" width="32" alt="B"><br>B&nbsp;(gray) | Balanced | Balances fan speed, performance and temperature. |
 | <img src="docs/icons/cool.png" width="32" alt="C"><br>C&nbsp;(blue) | Cool | Raises fan speed and lowers CPU performance to cool the laptop. Useful when it feels warm to the touch. |
 | <img src="docs/icons/quiet.png" width="32" alt="Q"><br>Q&nbsp;(violet) | Quiet | Keeps the fans at minimum speed and lowers CPU performance. Useful in quiet places. |
-| <img src="docs/icons/power-saver.png" width="32" alt="S"><br>S&nbsp;(green) | Power Saver | Limits CPU performance to save power and extend battery life. In My HP, this mode can also turn on OLED screen power saving; this app doesn't. |
+| <img src="docs/icons/power-saver.png" width="32" alt="S"><br>S&nbsp;(green) | Power Saver | Limits CPU performance to save power and extend battery life. In myHP, this mode can also turn on OLED screen power saving; this app doesn't. |
 
 ## Using it
 
@@ -33,10 +33,10 @@ What to expect:
 | When you... | What happens |
 |---|---|
 | Pick a mode in the menu | The laptop switches right away and the icon changes. |
-| Plug in or unplug the charger | Nothing, unless My HP is installed. Then you'll see My HP's mode for about 7 seconds before the app switches back. [Why?](#if-you-keep-my-hp) |
+| Plug in or unplug the charger | Nothing, unless myHP is installed. Then you'll see myHP's mode for about 7 seconds before the app switches back. [Why?](#if-you-keep-myhp) |
 | Wake the laptop from sleep | It stays on your mode. If anything changes it, the app switches back within about 7 seconds. |
-| Restart and sign in | The laptop starts up in its startup mode, which is My HP's setting if My HP is installed. A few seconds after you sign in, the app switches to your mode. If "Re-apply my mode at sign-in" is off, the startup mode becomes your mode instead. |
-| Pick a mode in My HP | It works, but only until the next plug-in, unplug, wake or restart. Then the app switches back to your mode. |
+| Restart and sign in | The laptop starts up in its startup mode, which is myHP's setting if myHP is installed. A few seconds after you sign in, the app switches to your mode. If "Re-apply my mode at sign-in" is off, the startup mode becomes your mode instead. |
+| Pick a mode in myHP | It works, but only until the next plug-in, unplug, wake or restart. Then the app switches back to your mode. |
 
 If a switch doesn't take, the app shows a notification. If the laptop's reply ever looks unfamiliar, for example after a BIOS update, it stops switching and the icon turns into an amber <img src="docs/icons/warning.png" width="20" alt="!" align="absmiddle">.
 
@@ -51,7 +51,7 @@ If a switch doesn't take, the app shows a notification. If the laptop's reply ev
 Check yours before installing, by running these from the downloaded folder in this order (they're described under [Tools](#tools)):
 
 1. `Test-Compatibility.ps1` says whether the BIOS supports the mode command.
-2. `Get-ModeValues.ps1` checks that each mode in My HP uses the value this app expects.
+2. `Get-ModeValues.ps1` checks that each mode in myHP uses the value this app expects.
 3. `Test-ModeSwitch.ps1` changes the mode once and switches back, asking before each step.
 
 This app won't work on Omen and Victus laptops, which use different values. Other tools cover those models.
@@ -87,25 +87,25 @@ powershell -ExecutionPolicy Bypass -File .\QuickModeSwitcher.ps1
 
 **To uninstall,** go to Settings → Apps → Installed apps → **Quick Mode Switcher** → Uninstall, or double-click **Uninstall.cmd** in the downloaded folder. Either one stops the app and removes it, its scheduled task, its Installed apps entry and its settings, then tells you if anything couldn't be removed. The laptop stays in whatever mode it's in, and your downloaded folder isn't touched.
 
-## If you keep My HP
+## If you keep myHP
 
-My HP doesn't have to go, but it does interfere a little. Its background process, `HP.SystemControl.Background.exe`, puts back My HP's own setting every time you plug in or unplug, several times over about 5 seconds. This app waits for it to finish, then switches back to your mode once; switching back sooner just starts a back-and-forth.
+myHP doesn't have to go, but it does interfere a little. Its background process, `HP.SystemControl.Background.exe`, puts back myHP's own setting every time you plug in or unplug, several times over about 5 seconds. This app waits for it to finish, then switches back to your mode once; switching back sooner just starts a back-and-forth.
 
-**Set My HP to the mode you want the laptop to start in.** The laptop starts up in My HP's setting, and that's the mode you'll see for a few seconds after plugging in or unplugging. Balanced is a sensible choice. Picking modes in this app doesn't change My HP's setting.
+**Set myHP to the mode you want the laptop to start in.** The laptop starts up in myHP's setting, and that's the mode you'll see for a few seconds after plugging in or unplugging. Balanced is a sensible choice. Picking modes in this app doesn't change myHP's setting.
 
-To remove My HP instead:
+To remove myHP instead:
 
-1. Settings → Apps → Installed apps → **myHP** → Uninstall.
-2. Search Start for **Change device installation settings** and choose **No**. HP delivers My HP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
+1. Settings → Apps → Installed apps → **myHP** → Uninstall. (HP is replacing myHP with a newer app called just **HP**; if that's what you have, this app hasn't been tested with it.)
+2. Search Start for **Change device installation settings** and choose **No**. HP delivers myHP through driver packages from Windows Update, and this setting should keep it from being reinstalled automatically.
 
-If My HP comes back anyway, this app keeps working; you'll just see the brief switch again. To watch it happen, run `Watch-PlugUnplug.ps1` (see [Tools](#tools)).
+If myHP comes back anyway, this app keeps working; you'll just see the brief switch again. To watch it happen, run `Watch-PlugUnplug.ps1` (see [Tools](#tools)).
 
 ## Troubleshooting
 
 - **No icon after installing.** Check the taskbar's `^` overflow area. If it isn't there, run `QuickModeSwitcher.ps1` directly from an Administrator PowerShell to see any error, or look at the "Quick Mode Switcher" task in Task Scheduler.
 - **Nothing happens when I run `QuickModeSwitcher.ps1`.** It's already running, probably the installed copy; look for its icon.
 - **The icon is an amber `!`.** The laptop's reply wasn't what the app expects, for example after a BIOS update, so switching is off. Run `Test-Compatibility.ps1` and `Get-ModeValues.ps1` to see what changed.
-- **The mode changes on its own.** That's My HP (see [If you keep My HP](#if-you-keep-my-hp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
+- **The mode changes on its own.** That's myHP (see [If you keep myHP](#if-you-keep-myhp)). On other models it may be a different HP program; `Find-ModeChanger.ps1` finds it.
 - **An old icon stays in the tray after updating or uninstalling.** Windows removes it as soon as you move the mouse over it.
 - **Settings** are in `settings.json` next to the app, which is `C:\Program Files\QuickModeSwitcher` when installed.
 
@@ -123,14 +123,14 @@ Each copies its results to the clipboard when it finishes.
 | Script | What it does | Changes anything? |
 |---|---|---|
 | `Test-Compatibility.ps1` | Shows the model and BIOS, whether the BIOS answers the mode command, and the HP software running with its memory use. | No |
-| `Get-ModeValues.ps1` | You pick each mode in My HP and type its name; it checks the BIOS value against the [table below](#how-it-works-technical). Needs My HP. | No |
+| `Get-ModeValues.ps1` | You pick each mode in myHP and type its name; it checks the BIOS value against the [table below](#how-it-works-technical). Needs myHP. | No |
 | `Test-ModeSwitch.ps1` | Re-sends the current mode, switches to another, then switches back. Asks before each step. | Yes, and switches back |
 | `Watch-PlugUnplug.ps1` | Logs mode changes as you plug in and unplug, and how long the app takes to switch back. | No |
 | `Find-ModeChanger.ps1` | Stops one HP app's programs at a time and watches plug/unplug, to find which one changes the mode. Asks before each app. | Stops programs until the next restart |
 
 ## How it works (technical)
 
-The modes are a single BIOS setting exposed through HP's WMI interface (`root\wmi`, class `hpqBIntM`), command type `0x4C`. It's the same setting My HP changes, and the same command the Linux kernel's `hp-wmi` driver uses.
+The modes are a single BIOS setting exposed through HP's WMI interface (`root\wmi`, class `hpqBIntM`), command type `0x4C`. It's the same setting myHP changes, and the same command the Linux kernel's `hp-wmi` driver uses.
 
 | Value | Mode |
 |---|---|
@@ -152,7 +152,7 @@ Safety checks:
 
 ## Limitations
 
-- It sets the BIOS mode only. Anything My HP does on top of that, such as Smart Sense's automatic switching or Power Saver's OLED screen power saving, isn't replicated.
+- It sets the BIOS mode only. Anything myHP does on top of that, such as Smart Sense's automatic switching or Power Saver's OLED screen power saving, isn't replicated.
 - Memory use is that of a PowerShell process, roughly 50–100 MB.
 
 ## Credits

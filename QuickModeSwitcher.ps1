@@ -273,11 +273,11 @@ $script:tray.add_MouseUp({
 })
 
 # ---------- Keeping your mode ----------
-# My HP's background process (HP.SystemControl.Background.exe) re-applies My HP's own setting when the
+# myHP's background process (HP.SystemControl.Background.exe) re-applies myHP's own setting when the
 # charger is plugged in or unplugged, several times over the first ~5 seconds. Switching back right away
 # just starts a back-and-forth, so after each such event, wait until it's done, switch back once, and
 # check again later in case it was slow. The same checks run after waking from sleep and after login,
-# in case My HP re-applies its setting then too. Without My HP installed, they never have to act.
+# in case myHP re-applies its setting then too. Without myHP installed, they never have to act.
 $checkAfter = @{
     power   = @(7, 12, 20)            # seconds after the event
     resume  = @(7, 12, 20)
@@ -297,7 +297,7 @@ function Start-Checks([string]$kind) {
 
 function Invoke-Check([bool]$isLast) {
     if ($script:eventKind -eq 'startup' -and -not $script:settings.restoreAtLogin -and -not $script:userPicked) {
-        # Not re-applying at login: the mode the laptop started in (My HP's setting) is the one to keep,
+        # Not re-applying at login: the mode the laptop started in (myHP's setting) is the one to keep,
         # unless a mode has been picked from the menu since
         Update-State
         if ($script:current -ge 0 -and $script:current -ne $script:settings.lastMode) {

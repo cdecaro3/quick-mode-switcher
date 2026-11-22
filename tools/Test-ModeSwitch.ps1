@@ -1,6 +1,6 @@
 # Test-ModeSwitch.ps1
 # Tests whether the BIOS accepts the "set mode" command. Asks before every change.
-# Sends only the mode values My HP itself uses (00-04) and ends on the mode you started in.
+# Sends only the mode values myHP itself uses (00-04) and ends on the mode you started in.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Test-ModeSwitch.ps1
 
@@ -101,8 +101,8 @@ $rc = Write-Mode (Get-ModeBytes $target)
 Start-Sleep -Seconds 3
 $now = Read-Mode
 Log "Step 2, set $(Get-ModeName $target) -> rwReturnCode=$rc, now reads $(Get-ModeName $now[0]) [$(Hex $now)]"
-$seen = Read-Host "If you have My HP, close and reopen it. Does it show $(Get-ModeName $target)? (y/n, or Enter to skip)"
-if ($seen) { Log "Step 2, My HP shows $(Get-ModeName $target): $seen" }
+$seen = Read-Host "If you have myHP, close and reopen it. Does it show $(Get-ModeName $target)? (y/n, or Enter to skip)"
+if ($seen) { Log "Step 2, myHP shows $(Get-ModeName $target): $seen" }
 
 # --- Step 3: switch back to where you started ---
 if (Ask-Ok "Step 3 of 3: switch back to $(Get-ModeName $orig[0]).") {
@@ -111,6 +111,6 @@ if (Ask-Ok "Step 3 of 3: switch back to $(Get-ModeName $orig[0]).") {
     $now = Read-Mode
     Log "Step 3, set $(Get-ModeName $orig[0]) -> rwReturnCode=$rc, now reads $(Get-ModeName $now[0]) [$(Hex $now)]"
 } else {
-    Log "Skipped step 3; the laptop is still in $(Get-ModeName $target). Switch back in My HP if you like."
+    Log "Skipped step 3; the laptop is still in $(Get-ModeName $target). Switch back in myHP if you like."
 }
 Finish

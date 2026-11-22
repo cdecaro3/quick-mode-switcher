@@ -1,9 +1,9 @@
 # Get-ModeValues.ps1
-# Read-only. Records the BIOS value for each mode you pick in My HP and checks it against the
-# values Quick Mode Switcher uses. It changes nothing. Needs My HP installed.
+# Read-only. Records the BIOS value for each mode you pick in myHP and checks it against the
+# values Quick Mode Switcher uses. It changes nothing. Needs myHP installed.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Get-ModeValues.ps1
-# Each time you pick a mode in My HP, wait about 5 seconds, type that mode's name here and press
+# Each time you pick a mode in myHP, wait about 5 seconds, type that mode's name here and press
 # Enter. Press Enter on an empty line to finish.
 
 $expected = @{ 'performance' = 0; 'balanced' = 1; 'cool' = 2; 'quiet' = 3; 'power saver' = 4 }
@@ -43,7 +43,7 @@ $start = Read-Raw
 Log "Current value: [$(Hex $start)]"
 
 while ($true) {
-    $label = Read-Host "`nPick a mode in My HP, wait about 5 seconds, then type its name (Enter on an empty line to finish)"
+    $label = Read-Host "`nPick a mode in myHP, wait about 5 seconds, then type its name (Enter on an empty line to finish)"
     if ([string]::IsNullOrWhiteSpace($label)) { break }
     $raw = Read-Raw
     if ($null -eq $raw) { Log "${label}: read failed"; continue }

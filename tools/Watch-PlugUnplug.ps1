@@ -1,7 +1,7 @@
 # Watch-PlugUnplug.ps1
 # Read-only. Shows what happens to the mode when the charger is plugged in or unplugged: whether
-# My HP changes it, and how long Quick Mode Switcher takes to switch it back. It changes nothing.
-# To see the switch-back: pick one mode in My HP (for example Balanced), then a different one in the
+# myHP changes it, and how long Quick Mode Switcher takes to switch it back. It changes nothing.
+# To see the switch-back: pick one mode in myHP (for example Balanced), then a different one in the
 # Quick Mode Switcher tray menu (for example Quiet), and leave Quick Mode Switcher running.
 # Run in an Administrator PowerShell from the repo folder:
 #   powershell -ExecutionPolicy Bypass -File .\tools\Watch-PlugUnplug.ps1
@@ -88,7 +88,7 @@ Log '--- Summary ---'
 if ($events.Count -eq 0) { Log 'No plug/unplugs seen.' }
 foreach ($e in $events) {
     if ($null -eq $e.switchedAfter) {
-        Log "$($e.label): the mode didn't change (My HP isn't installed, or its setting matches your mode)."
+        Log "$($e.label): the mode didn't change (myHP isn't installed, or its setting matches your mode)."
     } elseif ($null -eq $e.restoredAfter) {
         Log ("{0}: switched to {1} after {2:N1} s, and it was NOT switched back." -f $e.label, (Show-Mode $e.to), $e.switchedAfter)
     } else {
