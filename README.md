@@ -159,3 +159,7 @@ Safety checks:
 The command and mode values were documented by the Linux kernel's [`hp-wmi` driver](https://github.com/torvalds/linux/blob/master/drivers/platform/x86/hp/hp-wmi.c).
 
 Not affiliated with or endorsed by HP. Use at your own risk.
+
+## License
+
+[MIT](LICENSE)

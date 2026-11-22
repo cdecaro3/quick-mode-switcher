@@ -32,7 +32,7 @@ jobs:
           git archive --format=zip -o "$ZIP" HEAD \
             Install.cmd Uninstall.cmd \
             QuickModeSwitcher.ps1 Install-QuickModeSwitcher.ps1 Uninstall-QuickModeSwitcher.ps1 \
-            README.md tools
+            README.md LICENSE tools
           # The .cmd launchers only work with Windows line endings
           for f in Install.cmd Uninstall.cmd; do
             if [ "$(unzip -p "$ZIP" "$f" | tr -cd '\r' | wc -c)" -eq 0 ]; then
